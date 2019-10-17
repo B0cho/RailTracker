@@ -5,5 +5,42 @@
         android:id="@+id/settings"
         android:icon="@drawable/ic_settings"
         android:title="@string/settings"
-        app:showAsAction="always" />
+        app:showAsAction="ifRoom" />
+
+    <!-- TILE SOURCES GROUP -->
+    <item
+        android:id="@+id/tileSourceSubmenu"
+        android:checkable="true"
+        android:icon="@drawable/ic_tiles"
+        android:title="@string/tileSourceSubmenu"
+        app:showAsAction="ifRoom">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/MAPNIK_source"
+                    android:checkable="true"
+                    android:title="@string/MAPNIK_source"
+                    app:showAsAction="never" />
+            </group>
+        </menu>
+    </item>
+
+    <!-- OVERLAYS GROUP -->
+    <item
+        android:id="@+id/overlaysSubmenu"
+        android:checkable="true"
+        android:icon="@drawable/ic_overlays"
+        android:title="@string/overlaysSubmenu"
+        app:showAsAction="ifRoom">
+        <menu>
+            <item
+                android:id="@+id/ORM_overlay"
+                android:checkable="true"
+                android:title="@string/ORM_overlay"
+                app:showAsAction="never" />
+
+
+        </menu>
+    </item>
+
 </menu>

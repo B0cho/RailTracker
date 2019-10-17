@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">RailTracker</string>
     <string name="settings">Settings</string>
+    <string name="MAPNIK_source">MAPNIK</string>
+    <string name="tileSourceSubmenu">Tile sources</string>
+    <string name="overlaysSubmenu">Overlays</string>
+    <string name="ORM_overlay">OpenRailwayMap</string>
 </resources>
