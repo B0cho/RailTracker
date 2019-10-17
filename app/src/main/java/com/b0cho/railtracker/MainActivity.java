@@ -1,6 +1,7 @@
 package com.b0cho.railtracker;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
@@ -13,11 +14,14 @@ import android.widget.Toast;
 
 import org.osmdroid.api.IMapController;
 import org.osmdroid.config.Configuration;
+import org.osmdroid.tileprovider.MapTileProviderBasic;
 import org.osmdroid.tileprovider.tilesource.ITileSource;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.TilesOverlay;
 
 // MAIN ACTIVITY
 public class MainActivity extends AppCompatActivity {
@@ -86,16 +90,36 @@ public class MainActivity extends AppCompatActivity {
         // loading osmdroid configuration
         Context ctx = getApplicationContext();
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
-        
-        // setting map
         mapView = findViewById(R.id.mapView);
+
+        // default tile source
         mapView.setTileSource(TileSourceFactory.MAPNIK);
+
+        // default OpenRailwayMap overlay
+        final MapTileProviderBasic ORM_tileProvider = new MapTileProviderBasic(getApplicationContext());
+        final ITileSource ORM_tileSource = new XYTileSource(
+                "OpenRailwayMap",
+                1,
+                16,
+                256,
+                ".png",
+                new String[]{
+                        "http://a.tiles.openrailwaymap.org/standard/",
+                        "http://b.tiles.openrailwaymap.org/standard/",
+                        "http://c.tiles.openrailwaymap.org/standard/"});
+        ORM_tileProvider.setTileSource(ORM_tileSource);
+        final TilesOverlay ORM_overlay = new TilesOverlay(ORM_tileProvider, this.getBaseContext());
+        ORM_overlay.setLoadingBackgroundColor(Color.TRANSPARENT);
+        mapView.getOverlays().add(ORM_overlay);
+
+        // zooming settings
         mapView.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.NEVER);
         mapView.setMultiTouchControls(true);
         IMapController mapController = mapView.getController();
         mapController.setZoom(7.5);
+
+        // starting point
         GeoPoint startingPoint = new GeoPoint(51.46, 19.27);
         mapController.setCenter(startingPoint);
-
     }
 }
