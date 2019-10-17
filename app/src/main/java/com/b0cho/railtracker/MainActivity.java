@@ -5,11 +5,15 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.widget.Toast;
 
 import org.osmdroid.api.IMapController;
 import org.osmdroid.config.Configuration;
+import org.osmdroid.tileprovider.tilesource.ITileSource;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.CustomZoomButtonsController;
@@ -18,6 +22,7 @@ import org.osmdroid.views.MapView;
 // MAIN ACTIVITY
 public class MainActivity extends AppCompatActivity {
     private MapView mapView = null;
+    private Menu toolbarMenu = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,7 +41,31 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.toolbar_menu, menu);
+        toolbarMenu = menu;
+
+        // setting set tile source
+        setMenuTileSource();
+
         return true;
+    }
+
+    private void setMenuTileSource() {
+        MenuItem option = null;
+        final ITileSource source = mapView.getTileProvider().getTileSource();
+
+        // MAPNIK
+        if (source == TileSourceFactory.MAPNIK)
+            option = toolbarMenu.findItem(R.id.MAPNIK_source);
+
+        // setting checked
+        try {
+            //noinspection ConstantConditions
+            option.setChecked(true);
+        } catch (Exception e) {
+            // if no option was found
+            Log.e(null, e.getLocalizedMessage(), e);
+            Toast.makeText(getApplicationContext(), "ERROR: No tile source radio button found.", Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override
