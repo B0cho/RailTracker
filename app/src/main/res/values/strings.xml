@@ -5,4 +5,7 @@
     <string name="tileSourceSubmenu">Tile sources</string>
     <string name="overlaysSubmenu">Overlays</string>
     <string name="ORM_overlay">OpenRailwayMap</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
