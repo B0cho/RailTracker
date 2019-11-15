@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,8 +27,29 @@ import org.osmdroid.views.overlay.TilesOverlay;
 import java.util.Objects;
 
 public class Tracking extends Fragment {
+    private Integer currentTileSourceKey;
+
     private OnFragmentInteractionListener mListener;
     private MapView mapView;
+
+    public static SparseArray<ITileSource> offeredSources() {
+        final SparseArray<ITileSource> sources = new SparseArray<>();
+        // TODO: Add tile sources below
+        sources.append(1, TileSourceFactory.MAPNIK);
+        sources.append(2, TileSourceFactory.PUBLIC_TRANSPORT);
+        return sources;
+    }
+
+    public Integer getCurrentTileSourceKey() {
+        return currentTileSourceKey;
+    }
+
+    /*public static HashMap<Integer, TilesOverlay> offeredOverlays() {
+        final HashMap<Integer, TilesOverlay> overlays = new HashMap();
+
+
+        return overlays;
+    }*/
 
     public Tracking() {
         // Required empty public constructor
@@ -40,7 +62,6 @@ public class Tracking extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        mapViewInit();
     }
 
     @Override
@@ -48,8 +69,19 @@ public class Tracking extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_tracking, container, false);
-        mapViewInit(view, savedInstanceState);
+        // initialize mapview
+        try {
+            mapViewInit(view, savedInstanceState);
+        } catch (Exception e) {
+            Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
         return view;
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+//        TODO: Add saving map view state
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -83,8 +115,7 @@ public class Tracking extends Fragment {
             return;
         }
 
-        // default tile source
-        mapView.setTileSource(TileSourceFactory.MAPNIK);
+//        TODO: Add reading last set tile source
 
         // default OpenRailwayMap overlay
         final MapTileProviderBasic ORM_tileProvider = new MapTileProviderBasic(ctx);
@@ -112,11 +143,26 @@ public class Tracking extends Fragment {
         // starting point
         GeoPoint startingPoint = new GeoPoint(51.46, 19.27);
         mapController.setCenter(startingPoint);
+
+        // default tile source
+        try {
+            setTileSource(1);
+        } catch (Exception e) {
+            e.printStackTrace();
+            // TODO: add handling
+        }
     }
 
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
+    }
+
+    public void setTileSource(final Integer sourceKey) throws Exception {
+        if (offeredSources().indexOfKey(sourceKey) < 0)
+            throw new Exception("Invalid tile source key");
+        currentTileSourceKey = sourceKey;
+        mapView.setTileSource(offeredSources().get(currentTileSourceKey));
     }
 }
 

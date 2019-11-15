@@ -15,17 +15,15 @@
         android:title="@string/tileSourceSubmenu"
         app:showAsAction="ifRoom">
         <menu>
-            <group android:checkableBehavior="single">
-                <item
-                    android:id="@+id/MAPNIK_source"
-                    android:checkable="true"
-                    android:title="@string/MAPNIK_source"
-                    app:showAsAction="never" />
+            <group
+                android:id="@+id/tileSourceGroup"
+                android:checkableBehavior="single">
+                <!-- TILES SOURCES MENU ITEMS ADDED DYNAMICALLY -->
             </group>
         </menu>
     </item>
 
-    <!-- OVERLAYS GROUP -->
+    <!-- OVERLAYS SUBMENU -->
     <item
         android:id="@+id/overlaysSubmenu"
         android:checkable="true"
@@ -33,13 +31,11 @@
         android:title="@string/overlaysSubmenu"
         app:showAsAction="ifRoom">
         <menu>
-            <item
-                android:id="@+id/ORM_overlay"
-                android:checkable="true"
-                android:title="@string/ORM_overlay"
-                app:showAsAction="never" />
-
-
+            <group
+                android:id="@+id/overlaySourceGroup"
+                android:checkableBehavior="single">
+                <!-- OVERLAY SOURCES MENU ITEMS ADDED DYNAMICALLY -->
+            </group>
         </menu>
     </item>
 
