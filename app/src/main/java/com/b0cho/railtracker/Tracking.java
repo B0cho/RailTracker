@@ -1,6 +1,7 @@
 package com.b0cho.railtracker;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -34,9 +35,11 @@ public class Tracking extends Fragment {
 
     public static SparseArray<ITileSource> offeredSources() {
         final SparseArray<ITileSource> sources = new SparseArray<>();
-        // TODO: Add tile sources below
-        sources.append(1, TileSourceFactory.MAPNIK);
-        sources.append(2, TileSourceFactory.PUBLIC_TRANSPORT);
+        /* TODO: Add tile sources below
+         *  Mark default tile source with key = 0
+         */
+        sources.append(0, TileSourceFactory.DEFAULT_TILE_SOURCE);
+        sources.append(1, TileSourceFactory.PUBLIC_TRANSPORT);
         return sources;
     }
 
@@ -69,6 +72,7 @@ public class Tracking extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_tracking, container, false);
+
         // initialize mapview
         try {
             mapViewInit(view, savedInstanceState);
@@ -81,6 +85,9 @@ public class Tracking extends Fragment {
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
 //        TODO: Add saving map view state
+
+        // saving current tile source
+        outState.putInt(getString(R.string.bundleTileSourceKey), currentTileSourceKey);
         super.onSaveInstanceState(outState);
     }
 
@@ -99,6 +106,10 @@ public class Tracking extends Fragment {
     public void onDetach() {
         super.onDetach();
         mListener = null;
+        // saving fragment settings
+        SharedPreferences.Editor editor = Objects.requireNonNull(getActivity()).getPreferences(Context.MODE_PRIVATE).edit();
+        editor.putInt(getString(R.string.bundleTileSourceKey), currentTileSourceKey);
+        editor.apply();
     }
 
     private void mapViewInit(View view, Bundle savedInstanceState) {
@@ -106,7 +117,6 @@ public class Tracking extends Fragment {
         final Context ctx = getContext();
         assert ctx != null;
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
-
         try {
             mapView = (MapView) Objects.requireNonNull(view.findViewById(R.id.mapView));
         } catch (Exception e) {
@@ -114,8 +124,6 @@ public class Tracking extends Fragment {
             Toast.makeText(ctx, "ERROR: No MapView found", Toast.LENGTH_SHORT).show();
             return;
         }
-
-//        TODO: Add reading last set tile source
 
         // default OpenRailwayMap overlay
         final MapTileProviderBasic ORM_tileProvider = new MapTileProviderBasic(ctx);
@@ -144,12 +152,19 @@ public class Tracking extends Fragment {
         GeoPoint startingPoint = new GeoPoint(51.46, 19.27);
         mapController.setCenter(startingPoint);
 
-        // default tile source
+        // loading tile source
+        int tileSource;
+        if (savedInstanceState == null)
+            tileSource = Objects.requireNonNull(getActivity()).getPreferences(Context.MODE_PRIVATE).getInt(getString(R.string.bundleTileSourceKey), 0);
+        else
+            tileSource = savedInstanceState.getInt(getString(R.string.bundleTileSourceKey), 0);
+
+        // attempt to set tile source
         try {
-            setTileSource(1);
+            setTileSource(tileSource);
         } catch (Exception e) {
-            e.printStackTrace();
-            // TODO: add handling
+            Toast.makeText(getContext(), "Error during restoring tile source. Loading default", Toast.LENGTH_SHORT).show();
+            mapView.setTileSource(offeredSources().get(0));
         }
     }
 
