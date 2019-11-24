@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
+import android.util.Pair;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,36 +24,59 @@ import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.TilesOverlay;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 public class Tracking extends Fragment {
     private Integer currentTileSourceKey;
+    private final static SparseArray<ITileSource> offeredSources;
+
+    static {
+        // initialization of offeredSources
+        offeredSources = new SparseArray<>();
+        /* TODO: Add tile offeredSources below
+         *  Mark default tile source with key = 0
+         */
+        offeredSources.append(0, TileSourceFactory.DEFAULT_TILE_SOURCE);
+        //offeredSources.append(1, TileSourceFactory.PUBLIC_TRANSPORT);
+    }
+
+    private Set<Integer> currentOverlaysKeys;
 
     private OnFragmentInteractionListener mListener;
     private MapView mapView;
+    private SparseArray<Pair<String, Overlay>> offeredOverlays;
 
     public static SparseArray<ITileSource> offeredSources() {
-        final SparseArray<ITileSource> sources = new SparseArray<>();
-        /* TODO: Add tile sources below
-         *  Mark default tile source with key = 0
-         */
-        sources.append(0, TileSourceFactory.DEFAULT_TILE_SOURCE);
-        sources.append(1, TileSourceFactory.PUBLIC_TRANSPORT);
-        return sources;
+        return offeredSources;
+    }
+
+    private TilesOverlay OpenRailwayMap_overlay(Context context) {
+        final MapTileProviderBasic ORM_tileProvider = new MapTileProviderBasic(context);
+        ORM_tileProvider.setTileSource(new XYTileSource(
+                "OpenRailwayMap",
+                1,
+                16,
+                256,
+                ".png",
+                new String[]{
+                        "http://a.tiles.openrailwaymap.org/standard/",
+                        "http://b.tiles.openrailwaymap.org/standard/",
+                        "http://c.tiles.openrailwaymap.org/standard/"}));
+        final TilesOverlay ORM_overlay = new TilesOverlay(ORM_tileProvider, context);
+        ORM_overlay.setLoadingBackgroundColor(Color.TRANSPARENT);
+        return ORM_overlay;
     }
 
     public Integer getCurrentTileSourceKey() {
         return currentTileSourceKey;
     }
-
-    /*public static HashMap<Integer, TilesOverlay> offeredOverlays() {
-        final HashMap<Integer, TilesOverlay> overlays = new HashMap();
-
-
-        return overlays;
-    }*/
 
     public Tracking() {
         // Required empty public constructor
@@ -88,6 +112,9 @@ public class Tracking extends Fragment {
 
         // saving current tile source
         outState.putInt(getString(R.string.bundleTileSourceKey), currentTileSourceKey);
+
+        // saving current overlays
+        outState.putIntegerArrayList(getString(R.string.bundleOverlaysKey), new ArrayList<>(getCurrentOverlaysKeys()));
         super.onSaveInstanceState(outState);
     }
 
@@ -108,7 +135,13 @@ public class Tracking extends Fragment {
         mListener = null;
         // saving fragment settings
         SharedPreferences.Editor editor = Objects.requireNonNull(getActivity()).getPreferences(Context.MODE_PRIVATE).edit();
+        // saving current tile source
         editor.putInt(getString(R.string.bundleTileSourceKey), currentTileSourceKey);
+        // saving current overlays
+        Set<String> stringSet = new HashSet<>();
+        for (Integer key : currentOverlaysKeys)
+            stringSet.add(key.toString());
+        editor.putStringSet(getString(R.string.bundleOverlaysKey), stringSet);
         editor.apply();
     }
 
@@ -125,22 +158,31 @@ public class Tracking extends Fragment {
             return;
         }
 
-        // default OpenRailwayMap overlay
-        final MapTileProviderBasic ORM_tileProvider = new MapTileProviderBasic(ctx);
-        final ITileSource ORM_tileSource = new XYTileSource(
-                "OpenRailwayMap",
-                1,
-                16,
-                256,
-                ".png",
-                new String[]{
-                        "http://a.tiles.openrailwaymap.org/standard/",
-                        "http://b.tiles.openrailwaymap.org/standard/",
-                        "http://c.tiles.openrailwaymap.org/standard/"});
-        ORM_tileProvider.setTileSource(ORM_tileSource);
-        final TilesOverlay ORM_overlay = new TilesOverlay(ORM_tileProvider, ctx);
-        ORM_overlay.setLoadingBackgroundColor(Color.TRANSPARENT);
-        mapView.getOverlays().add(ORM_overlay);
+        // initializing overlays
+        offeredOverlays = new SparseArray<>();
+        currentOverlaysKeys = new HashSet<>();
+        offeredOverlays.append(0, new Pair<>(getString(R.string.ORMStandard_name), (Overlay) OpenRailwayMap_overlay(ctx)));
+        offeredOverlays.append(1, new Pair<>(TileSourceFactory.PUBLIC_TRANSPORT.name(),
+                (Overlay) new TilesOverlay(
+                        new MapTileProviderBasic(ctx, TileSourceFactory.PUBLIC_TRANSPORT),
+                        ctx)));
+
+        // loading overlays
+        ArrayList<Integer> overlaysKeys;
+        if (savedInstanceState == null) {
+            // restoring state from last launch
+            final Set<String> overlaysKeysStrings = Objects.requireNonNull(getActivity()).getPreferences(Context.MODE_PRIVATE).getStringSet(getString(R.string.bundleOverlaysKey), new HashSet<>(Collections.singletonList("0")));
+            overlaysKeys = new ArrayList<>();
+            for (String key : overlaysKeysStrings)
+                overlaysKeys.add(Integer.parseInt(key));
+        } else
+            overlaysKeys = savedInstanceState.getIntegerArrayList(getString(R.string.bundleOverlaysKey));
+
+        try {
+            setOverlays(Objects.requireNonNull(overlaysKeys).toArray(new Integer[0]));
+        } catch (Exception e) {
+            // TODO: add handling
+        }
 
         // zooming settings
         mapView.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.NEVER);
@@ -166,6 +208,36 @@ public class Tracking extends Fragment {
             Toast.makeText(getContext(), "Error during restoring tile source. Loading default", Toast.LENGTH_SHORT).show();
             mapView.setTileSource(offeredSources().get(0));
         }
+    }
+
+    public void setOverlays(Integer... keys) throws Exception {
+//        TODO: add handling for null parameter and test
+        Exception exception = null;
+        for (Integer key : keys) {
+            if (key < 0)
+                if (exception == null)
+                    exception = new Exception("Fail during setting Overlay");
+            if (currentOverlaysKeys.contains(key)) {
+                // turning off overlay
+                mapView.getOverlays().remove(offeredOverlays.valueAt(key).second);
+                currentOverlaysKeys.remove(key);
+            } else {
+                // turning on overlay
+                mapView.getOverlays().add(offeredOverlays.valueAt(key).second);
+                currentOverlaysKeys.add(key);
+            }
+            mapView.invalidate();
+        }
+        if (exception != null)
+            throw exception;
+    }
+
+    public final SparseArray<Pair<String, Overlay>> getOfferedOverlays() {
+        return offeredOverlays;
+    }
+
+    public Set<Integer> getCurrentOverlaysKeys() {
+        return currentOverlaysKeys;
     }
 
     public interface OnFragmentInteractionListener {

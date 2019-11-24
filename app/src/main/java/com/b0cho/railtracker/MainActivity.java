@@ -4,9 +4,15 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Pair;
+import android.util.SparseArray;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+
+import org.osmdroid.views.overlay.Overlay;
+
+import java.util.Set;
 
 // MAIN ACTIVITY
 public class MainActivity extends AppCompatActivity implements Tracking.OnFragmentInteractionListener {
@@ -42,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements Tracking.OnFragme
         overlaysMenu = toolbarMenu.findItem(R.id.overlaysSubmenu).getSubMenu();
 
         // setting sources
-        settingMenuSources();
+        initMenuSources();
         try {
             setTilesSourceSelection(trackingFragment.getCurrentTileSourceKey());
         } catch (Exception e) {
@@ -50,34 +56,69 @@ public class MainActivity extends AppCompatActivity implements Tracking.OnFragme
         }
 
         // setting overlays
-        //final Set<Entry<Integer, TilesOverlay>> overlaysSet = Tracking.offeredOverlays().entrySet();
-        //for (Entry<Integer, TilesOverlay> tilesOverlayEntry : overlaysSet  ) {
-        //final MenuItem menuItem = tilesMenu.add(R.id.overlaySourceGroup, tilesOverlayEntry.getKey(), Menu.NONE, );
-        //}
-
+        initMenuOverlays();
+        try {
+            setOverlaysSelection(trackingFragment.getCurrentOverlaysKeys());
+        } catch (Exception e) {
+            // TODO: add handling
+        }
         return true;
+    }
+
+    private void setOverlaysSelection(Set<Integer> currentOverlaysKeys) throws Exception {
+        /*final MenuItem menuItem = overlaysMenu.findItem(key);
+        if (menuItem == null)
+            throw new Exception("Invalid selection key - tiles source");
+        menuItem.setChecked(true);*/
+        Exception e = null;
+        for (Integer key : currentOverlaysKeys) {
+            final MenuItem menuItem = overlaysMenu.findItem(key);
+            if (menuItem == null) {
+                e = new Exception("Invalid selection key - overlays");
+                continue;
+            }
+            menuItem.setChecked(true);
+        }
+        if (e != null)
+            throw e;
+    }
+
+    private void initMenuOverlays() {
+        final SparseArray<Pair<String, Overlay>> overlaySparseArray = trackingFragment.getOfferedOverlays();
+        for (int i = 0; i < overlaySparseArray.size(); i++) {
+            final MenuItem menuItem = overlaysMenu.add(R.id.overlaySourceGroup, overlaySparseArray.keyAt(i), Menu.NONE, overlaySparseArray.valueAt(i).first);
+            menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+            menuItem.setCheckable(true);
+        }
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (Tracking.offeredSources().get(item.getItemId()) != null) {
+        // tiles
+        if (item.getGroupId() == R.id.tileSourceGroup && Tracking.offeredSources().get(item.getItemId()) != null) {
             try {
                 trackingFragment.setTileSource(item.getItemId());
             } catch (Exception e) {
 //                TODO: add handling
-                e.printStackTrace();
             }
+            item.setChecked(true);
+            return true;
+        }
+
+        // overlays
+        if (item.getGroupId() == R.id.overlaySourceGroup && trackingFragment.getOfferedOverlays().get(item.getItemId()) != null) {
             try {
-                item.setChecked(true);
+                trackingFragment.setOverlays(item.getItemId());
             } catch (Exception e) {
                 // TODO: add handling
             }
+            item.setChecked(!item.isChecked());
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    private void settingMenuSources() {
+    private void initMenuSources() {
         for (int i = 0; i < Tracking.offeredSources().size(); i++) {
             final MenuItem menuItem = sourcesMenu.add(R.id.tileSourceGroup, Tracking.offeredSources().keyAt(i), Menu.NONE, Tracking.offeredSources().valueAt(i).name());
             menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
