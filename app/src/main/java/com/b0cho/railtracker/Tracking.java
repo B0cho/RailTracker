@@ -44,7 +44,6 @@ public class Tracking extends Fragment {
          *  Mark default tile source with key = 0
          */
         offeredSources.append(0, TileSourceFactory.DEFAULT_TILE_SOURCE);
-        //offeredSources.append(1, TileSourceFactory.PUBLIC_TRANSPORT);
     }
 
     private Set<Integer> currentOverlaysKeys;
@@ -59,16 +58,14 @@ public class Tracking extends Fragment {
 
     private TilesOverlay OpenRailwayMap_overlay(Context context) {
         final MapTileProviderBasic ORM_tileProvider = new MapTileProviderBasic(context);
+        final String[] ORM_tileUrls = getResources().getStringArray(R.array.ORM_tileUrls);
         ORM_tileProvider.setTileSource(new XYTileSource(
                 "OpenRailwayMap",
                 1,
                 16,
                 256,
                 ".png",
-                new String[]{
-                        "http://a.tiles.openrailwaymap.org/standard/",
-                        "http://b.tiles.openrailwaymap.org/standard/",
-                        "http://c.tiles.openrailwaymap.org/standard/"}));
+                ORM_tileUrls));
         final TilesOverlay ORM_overlay = new TilesOverlay(ORM_tileProvider, context);
         ORM_overlay.setLoadingBackgroundColor(Color.TRANSPARENT);
         return ORM_overlay;
@@ -161,11 +158,10 @@ public class Tracking extends Fragment {
         // initializing overlays
         offeredOverlays = new SparseArray<>();
         currentOverlaysKeys = new HashSet<>();
+
+        /* TODO: Append offered overlays
+         */
         offeredOverlays.append(0, new Pair<>(getString(R.string.ORMStandard_name), (Overlay) OpenRailwayMap_overlay(ctx)));
-        offeredOverlays.append(1, new Pair<>(TileSourceFactory.PUBLIC_TRANSPORT.name(),
-                (Overlay) new TilesOverlay(
-                        new MapTileProviderBasic(ctx, TileSourceFactory.PUBLIC_TRANSPORT),
-                        ctx)));
 
         // loading overlays
         ArrayList<Integer> overlaysKeys;
@@ -173,6 +169,7 @@ public class Tracking extends Fragment {
             // restoring state from last launch
             final Set<String> overlaysKeysStrings = Objects.requireNonNull(getActivity()).getPreferences(Context.MODE_PRIVATE).getStringSet(getString(R.string.bundleOverlaysKey), new HashSet<>(Collections.singletonList("0")));
             overlaysKeys = new ArrayList<>();
+            assert overlaysKeysStrings != null : "overlaysKeysStrings = null";
             for (String key : overlaysKeysStrings)
                 overlaysKeys.add(Integer.parseInt(key));
         } else
