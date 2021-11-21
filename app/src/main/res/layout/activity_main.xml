@@ -4,7 +4,26 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity" >
+    tools:context=".MainActivity">
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/myLocationActionButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="24dp"
+        android:backgroundTint="@color/colorPrimary"
+        android:clickable="true"
+        android:contentDescription="@string/locationButtonContDescription"
+        android:focusable="true"
+        android:tint="@color/colorDefaultTint"
+        android:visibility="visible"
+        app:backgroundTint="@color/colorPrimary"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/ic_menu_mylocation"
+        tools:ignore="ImageContrastCheck"
+        tools:visibility="visible" />
 
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolbar"
@@ -20,20 +39,13 @@
         app:title="@string/app_name"
         app:titleTextColor="@android:color/background_light" />
 
-    <!--<fragment
-        android:id="@+id/mapViewFragment"
-        android:name="com.b0cho.railtracker.Tracking"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar" />-->
     <FrameLayout
         android:id="@+id/trackingFragmentContainer"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar" />
+        app:layout_constraintTop_toBottomOf="@+id/toolbar">
+
+    </FrameLayout>
 
 </android.support.constraint.ConstraintLayout>

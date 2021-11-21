@@ -11,4 +11,5 @@
     <string name="bundleTileSourceKey">tileSourceKey</string>
     <string name="bundleOverlaysKey">overlaysKey</string>
     <string name="ORMStandard_name">OpenRailwayMap - Infrastructure</string>
+    <string name="locationButtonContDescription">myLocationButton</string>
 </resources>
