@@ -2,6 +2,6 @@
 <resources>
     <color name="colorPrimary">@android:color/darker_gray</color>
     <color name="colorPrimaryDark">#6F6F6F</color>
-    <color name="colorAccent">#8A1212</color>
+    <color name="colorAccent">#73C0FF</color>
     <color name="colorDefaultTint">#FFFFFF</color>
 </resources>

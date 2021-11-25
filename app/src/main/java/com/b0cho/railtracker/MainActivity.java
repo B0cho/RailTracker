@@ -2,6 +2,8 @@ package com.b0cho.railtracker;
 
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Pair;
@@ -9,6 +11,10 @@ import android.util.SparseArray;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 
 import org.osmdroid.views.overlay.Overlay;
 
@@ -20,6 +26,7 @@ public class MainActivity extends AppCompatActivity implements Tracking.OnFragme
     private Menu sourcesMenu = null;
     private Menu overlaysMenu = null;
     private Tracking trackingFragment;
+    private FusedLocationProviderClient fusedLocationClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +42,22 @@ public class MainActivity extends AppCompatActivity implements Tracking.OnFragme
 
         // setting tracking to fragment container
         getSupportFragmentManager().beginTransaction().add(R.id.trackingFragmentContainer, trackingFragment).commit();
+
+        // initializing location provider
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        // setting listeners
+        final FloatingActionButton myLocationButton = findViewById(R.id.myLocationActionButton);
+        myLocationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // TODO: add handling
+
+                // button handling - position found
+                myLocationButton.setFocusableInTouchMode(true);
+                myLocationButton.requestFocus();
+            }
+        });
     }
 
     @Override
