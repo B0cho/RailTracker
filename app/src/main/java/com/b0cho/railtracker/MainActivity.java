@@ -1,8 +1,13 @@
 package com.b0cho.railtracker;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -12,9 +17,11 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.Task;
 
 import org.osmdroid.views.overlay.Overlay;
 
@@ -48,14 +55,29 @@ public class MainActivity extends AppCompatActivity implements Tracking.OnFragme
 
         // setting listeners
         final FloatingActionButton myLocationButton = findViewById(R.id.myLocationActionButton);
-        myLocationButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // TODO: add handling
+        myLocationButton.setOnClickListener(view -> {
+            // TODO: add handling
+            // checking location permissions
+            final boolean isLocationPermissionGranted = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
 
+            // no location permission granted
+            if (!isLocationPermissionGranted) {
+                ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                    1);
+                Toast.makeText(MainActivity.this, "Permission for location not granted!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            // getting last location
+            final Task<Location> location = fusedLocationClient.getLastLocation();
+            if (location != null) {
                 // button handling - position found
                 myLocationButton.setFocusableInTouchMode(true);
                 myLocationButton.requestFocus();
+            } else {
+                Toast.makeText(MainActivity.this, "Problem with location sevice!", Toast.LENGTH_SHORT).show();
             }
         });
     }
