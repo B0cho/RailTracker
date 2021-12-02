@@ -3,6 +3,7 @@ package com.b0cho.railtracker;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -26,6 +27,7 @@ import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.TilesOverlay;
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,6 +53,7 @@ public class Tracking extends Fragment {
     private OnFragmentInteractionListener mListener;
     private MapView mapView;
     private SparseArray<Pair<String, Overlay>> offeredOverlays;
+    private MyLocationNewOverlay locationOverlay;
 
     public static SparseArray<ITileSource> offeredSources() {
         return offeredSources;
@@ -155,6 +158,9 @@ public class Tracking extends Fragment {
             return;
         }
 
+        // initializing locationOverlay
+        locationOverlay = new MyLocationNewOverlay(mapView);
+
         // initializing overlays
         offeredOverlays = new SparseArray<>();
         currentOverlaysKeys = new HashSet<>();
@@ -235,6 +241,10 @@ public class Tracking extends Fragment {
 
     public Set<Integer> getCurrentOverlaysKeys() {
         return currentOverlaysKeys;
+    }
+
+    public MyLocationNewOverlay getLocationOverlay() {
+        return locationOverlay;
     }
 
     public interface OnFragmentInteractionListener {

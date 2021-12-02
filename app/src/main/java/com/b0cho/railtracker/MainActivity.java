@@ -5,10 +5,8 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Pair;
@@ -16,14 +14,14 @@ import android.util.SparseArray;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.Task;
 
 import org.osmdroid.views.overlay.Overlay;
+import org.osmdroid.views.overlay.mylocation.IMyLocationConsumer;
+import org.osmdroid.views.overlay.mylocation.IMyLocationProvider;
 
 import java.util.Set;
 
@@ -69,16 +67,59 @@ public class MainActivity extends AppCompatActivity implements Tracking.OnFragme
                 Toast.makeText(MainActivity.this, "Permission for location not granted!", Toast.LENGTH_SHORT).show();
                 return;
             }
-            
-            // getting last location
-            final Task<Location> location = fusedLocationClient.getLastLocation();
-            if (location != null) {
-                // button handling - position found
-                myLocationButton.setFocusableInTouchMode(true);
-                myLocationButton.requestFocus();
-            } else {
-                Toast.makeText(MainActivity.this, "Problem with location sevice!", Toast.LENGTH_SHORT).show();
+
+            // permission is OK, enabling my location
+            // location provider converter: fusedLocationProvider -> IMyLocationProvider
+            class LocationProviderConverter implements IMyLocationProvider {
+                private Location lastLocation = null;
+                private IMyLocationConsumer consumer;
+                @Override
+                public boolean startLocationProvider(IMyLocationConsumer myLocationConsumer) {
+                    consumer = myLocationConsumer;
+                    return true;
+                }
+
+                @Override
+                public void stopLocationProvider() {
+
+                }
+
+                @Override
+                public Location getLastKnownLocation() {
+                    return lastLocation;
+                }
+
+                @Override
+                public void destroy() {
+
+                }
+
+                public void setLastLocation(Location lastLocation) {
+                    this.lastLocation = lastLocation;
+                    consumer.onLocationChanged(this.lastLocation, this);
+                }
             }
+
+            LocationProviderConverter locationProviderConverter = new LocationProviderConverter();
+            final boolean isLocationEnabled = trackingFragment.getLocationOverlay().enableMyLocation(locationProviderConverter);
+
+            // attempt to get last location
+            fusedLocationClient.getLastLocation().addOnCompleteListener(MainActivity.this, task -> {
+                if(task.isSuccessful() && isLocationEnabled) {
+                    // button handling - position found
+                    myLocationButton.setFocusableInTouchMode(true);
+                    myLocationButton.requestFocus();
+
+                    // mapView handling
+                    locationProviderConverter.setLastLocation(task.getResult());
+                    trackingFragment.getLocationOverlay().enableFollowLocation();
+
+                    // TODO: add handling position on map -> draw position
+                } else {
+                    // TODO: add handling, when last location / service is invalid
+                    Toast.makeText(MainActivity.this, "Problem with last location service!", Toast.LENGTH_SHORT).show();
+                }
+            });
         });
     }
 
