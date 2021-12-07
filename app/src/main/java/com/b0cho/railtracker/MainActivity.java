@@ -1,6 +1,7 @@
 package com.b0cho.railtracker;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.net.Uri;
@@ -14,6 +15,7 @@ import android.util.SparseArray;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -33,6 +35,7 @@ public class MainActivity extends AppCompatActivity implements Tracking.OnFragme
     private Tracking trackingFragment;
     private FusedLocationProviderClient fusedLocationClient;
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -99,9 +102,19 @@ public class MainActivity extends AppCompatActivity implements Tracking.OnFragme
                     consumer.onLocationChanged(this.lastLocation, this);
                 }
             }
-
             LocationProviderConverter locationProviderConverter = new LocationProviderConverter();
             final boolean isLocationEnabled = trackingFragment.getLocationOverlay().enableMyLocation(locationProviderConverter);
+
+            // listener for losing location tracking after moving the map
+            trackingFragment.getMapView().setOnTouchListener((view1, motionEvent) -> {
+                super.onTouchEvent(motionEvent);
+                if(motionEvent.getAction() == MotionEvent.ACTION_MOVE) {
+                    myLocationButton.setFocusableInTouchMode(false);
+                    myLocationButton.clearFocus();
+                    trackingFragment.getLocationOverlay().disableFollowLocation();
+                }
+                return false;
+            });
 
             // attempt to get last location
             fusedLocationClient.getLastLocation().addOnCompleteListener(MainActivity.this, task -> {
@@ -115,6 +128,7 @@ public class MainActivity extends AppCompatActivity implements Tracking.OnFragme
                     trackingFragment.getLocationOverlay().enableFollowLocation();
 
                     // TODO: add handling position on map -> draw position
+                    trackingFragment.showLocationOverlay(true);
                 } else {
                     // TODO: add handling, when last location / service is invalid
                     Toast.makeText(MainActivity.this, "Problem with last location service!", Toast.LENGTH_SHORT).show();

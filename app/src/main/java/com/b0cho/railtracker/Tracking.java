@@ -3,7 +3,6 @@ package com.b0cho.railtracker;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -72,6 +71,10 @@ public class Tracking extends Fragment {
         final TilesOverlay ORM_overlay = new TilesOverlay(ORM_tileProvider, context);
         ORM_overlay.setLoadingBackgroundColor(Color.TRANSPARENT);
         return ORM_overlay;
+    }
+
+    public MapView getMapView () {
+        return mapView;
     }
 
     public Integer getCurrentTileSourceKey() {
@@ -245,6 +248,13 @@ public class Tracking extends Fragment {
 
     public MyLocationNewOverlay getLocationOverlay() {
         return locationOverlay;
+    }
+
+    public void showLocationOverlay(boolean show) {
+        if(show)
+            mapView.getOverlays().add(locationOverlay);
+        else
+            mapView.getOverlays().remove(locationOverlay);
     }
 
     public interface OnFragmentInteractionListener {
