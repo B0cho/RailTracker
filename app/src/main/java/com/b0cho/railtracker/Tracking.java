@@ -3,7 +3,6 @@ package com.b0cho.railtracker;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
@@ -73,10 +72,6 @@ public class Tracking extends Fragment {
         return ORM_overlay;
     }
 
-    public MapView getMapView () {
-        return mapView;
-    }
-
     public Integer getCurrentTileSourceKey() {
         return currentTileSourceKey;
     }
@@ -106,6 +101,7 @@ public class Tracking extends Fragment {
         } catch (Exception e) {
             Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
         }
+        mListener.initializeMapViewListeners(mapView);
         return view;
     }
 
@@ -259,7 +255,7 @@ public class Tracking extends Fragment {
 
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
-        void onFragmentInteraction(Uri uri);
+        void initializeMapViewListeners(MapView mapView);
     }
 
     public void setTileSource(final Integer sourceKey) throws Exception {
