@@ -9,31 +9,35 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.widget.Toast;
+
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+
 import org.osmdroid.views.overlay.mylocation.IMyLocationConsumer;
 import org.osmdroid.views.overlay.mylocation.IMyLocationProvider;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class RailLocationProvider implements IMyLocationProvider {
     private Location mLastLocation;
     private final FusedLocationProviderClient mFusedLocationProvider;
     private final Context mContext;
     private IMyLocationConsumer mMyLocationConsumer;
-    private ArrayList<IRailLocationListener> mLocationListeners;
-    private static final long mLocationTimestampDelay_s = 5L;
+    private static final long mLocationTimestampDelay_s = 10;
 
     public static final String[] PERMISSIONS = {
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION
     };
-
-    public interface IRailLocationListener {
-        void onLocationRequestFinished(Location location);
-    }
 
     // CONSTRUCTORS
     @SuppressLint("MissingPermission")
@@ -41,13 +45,6 @@ public class RailLocationProvider implements IMyLocationProvider {
         mContext = context;
         mFusedLocationProvider = fusedLocationProviderClient;
         mLastLocation = null;
-        mLocationListeners = new ArrayList<>();
-    }
-
-    private void callbackAllListeners(Location location) {
-        for (IRailLocationListener listener: mLocationListeners) {
-            listener.onLocationRequestFinished(location);
-        }
     }
 
     /// IMyLocationProvider methods
@@ -75,8 +72,6 @@ public class RailLocationProvider implements IMyLocationProvider {
     }
 
     public boolean checkPermissions(final Context context) throws IllegalArgumentException {
-        /*return ActivityCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;*/
         if(context == null)
             throw new IllegalArgumentException();
         for(String permission: PERMISSIONS) {
@@ -87,17 +82,24 @@ public class RailLocationProvider implements IMyLocationProvider {
     }
 
     @SuppressLint("MissingPermission")
-    public void requestLocationOnce() throws IllegalStateException {
+    public void requestLocationUpdate(LocationRequest locationRequest, LocationCallback locationCallback) throws IllegalStateException {
         if(!checkPermissions(mContext))
             throw new IllegalStateException("Location permissions not granted!");
-        if(mLastLocation == null || !isLocationOutdated(mLastLocation))
-            callbackAllListeners(mLastLocation);
-        else
-            mFusedLocationProvider.requestLocationUpdates(REQUEST_LOCATION_ONCE(), CALLBACK_ALL(), Looper.getMainLooper());
+        if(mLastLocation != null && !isLocationOutdated(mLastLocation)) {
+            locationCallback.onLocationResult(LocationResult.create(new ArrayList<>(Collections.singletonList(mLastLocation))));
+            mMyLocationConsumer.onLocationChanged(mLastLocation, this);
+        } else
+            Toast.makeText(mContext, "Location old", Toast.LENGTH_SHORT).show();
+            mFusedLocationProvider.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+                    .addOnSuccessListener(unused -> mFusedLocationProvider.getLastLocation()
+                            .addOnCompleteListener(task -> {
+                                mLastLocation = task.getResult();
+                                mMyLocationConsumer.onLocationChanged(mLastLocation, this);
+                            }));
     }
 
-    public void addLocationListener(@NonNull IRailLocationListener railLocationListener) {
-        mLocationListeners.add(railLocationListener);
+    public void requestLocationOnce(LocationCallback locationCallback) throws IllegalStateException {
+        requestLocationUpdate(REQUEST_LOCATION_ONCE(), locationCallback);
     }
 
     @NonNull
@@ -105,23 +107,10 @@ public class RailLocationProvider implements IMyLocationProvider {
         return LocationRequest.create().setNumUpdates(1).setInterval(10 * 1000L);
     }
 
-    @NonNull
-    private LocationCallback CALLBACK_ALL() {
-        return new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
-                if (locationResult != null) {
-                    mLastLocation = locationResult.getLastLocation();
-                    callbackAllListeners(mLastLocation);
-                }
-            }
-        };
-    }
-
-    private static boolean isLocationOutdated(final Location location) throws IllegalArgumentException {
+    private static boolean isLocationOutdated(final Location location) {
         if(location != null) {
             return SystemClock.elapsedRealtimeNanos() - location.getElapsedRealtimeNanos() > mLocationTimestampDelay_s * 1000000000L;
         } else
-            throw new IllegalArgumentException();
+            return true;
     }
 }
