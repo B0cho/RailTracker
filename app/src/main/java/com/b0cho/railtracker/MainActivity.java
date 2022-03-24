@@ -2,13 +2,11 @@ package com.b0cho.railtracker;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.Bundle;
-import android.os.Looper;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -20,16 +18,12 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.widget.Toast;
 
-import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Overlay;
-import org.osmdroid.views.overlay.mylocation.IMyLocationConsumer;
-import org.osmdroid.views.overlay.mylocation.IMyLocationProvider;
 
 import java.util.Set;
 
@@ -41,6 +35,8 @@ public class MainActivity extends AppCompatActivity implements Tracking.OnFragme
     private Menu overlaysMenu = null;
     private Tracking trackingFragment;
     private RailLocationProvider railLocationProvider;
+    private LocationCallback requestSingleLocationCallback;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,37 +54,44 @@ public class MainActivity extends AppCompatActivity implements Tracking.OnFragme
         getSupportFragmentManager().beginTransaction().add(R.id.trackingFragmentContainer, trackingFragment).commit();
 
         // initializing location provider
-        railLocationProvider = new RailLocationProvider(this, LocationServices.getFusedLocationProviderClient(this));
+        railLocationProvider = new RailLocationProvider(getApplicationContext(), LocationServices.getFusedLocationProviderClient(this), SystemClock::elapsedRealtimeNanos);
 
-        // setting listeners
+        // setting listeners and callbacks
         final FloatingActionButton myLocationButton = findViewById(R.id.myLocationActionButton);
+
+        // setting callbacks
+        requestSingleLocationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                centerFocusOnLocation(myLocationButton);
+            }
+        };
+
         myLocationButton.setOnClickListener(view -> {
             // no location permission granted
-            if (!railLocationProvider.checkPermissions(this)) {
+            if (!RailLocationProvider.checkPermissions(this)) {
                 ActivityCompat.requestPermissions(MainActivity.this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
                     1);
                 Toast.makeText(MainActivity.this, "Permission for location not granted!", Toast.LENGTH_SHORT).show();
                 return;
             }
-
-            railLocationProvider.requestLocationOnce(new LocationCallback() {
-                @Override
-                public void onLocationResult(LocationResult locationResult) {
-                    centerFocusOnLocation(myLocationButton, locationResult.getLastLocation());
-                }
-            });
+            try {
+                railLocationProvider.requestSingleLocationUpdate(requestSingleLocationCallback);
+            }
+            catch (IllegalStateException e) {
+                // permissions were changed in meantime, provider is no longer working
+                Snackbar.make(findViewById(R.id.activityMain), "Location access permissions are lost! Location service is no longer available", Snackbar.LENGTH_SHORT).show();
+            }
         });
     }
 
 
-    private void centerFocusOnLocation(@NonNull FloatingActionButton myLocationButton, Location location) {
+    private void centerFocusOnLocation(@NonNull FloatingActionButton myLocationButton) {
         // button handling - position found
         myLocationButton.setFocusableInTouchMode(true);
         myLocationButton.requestFocus();
 
-        // mapView handling
-//        locationProviderConverter.setLastLocation(location);
         trackingFragment.getLocationOverlay().enableFollowLocation();
 
         // TODO: add handling position on map -> draw position

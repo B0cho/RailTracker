@@ -14,6 +14,7 @@ import android.location.Location;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
+import android.util.Log;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -51,6 +52,7 @@ public class RailLocationProviderTest extends TestCase {
 
     @BeforeClass
     public static void onBeforeClass() {
+        Log.d("TEST_CLASS", "DO NOT FORGET TO SET RailTracker AS MOCK LOCATION APP IN YOUR DEVICE DEVELOPER SETTINGS!");
         appContext = InstrumentationRegistry.getTargetContext();
         systemClock = SystemClock::elapsedRealtimeNanos;
         elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos();
@@ -76,7 +78,7 @@ public class RailLocationProviderTest extends TestCase {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testRequestSingleLocationUpdate_illegalState() throws RailLocationProvider.InternalViolationException {
+    public void testRequestSingleLocationUpdate_illegalState() {
         when(context.checkSelfPermission(anyString())).thenReturn(PackageManager.PERMISSION_DENIED);
 
         RailLocationProvider railLocationProvider = new RailLocationProvider(context, fusedLocationProviderClient, systemClock);
@@ -177,11 +179,7 @@ public class RailLocationProviderTest extends TestCase {
 
         // requesting location - test
         railLocationProvider.startLocationProvider(locationConsumer);
-        try {
-            railLocationProvider.requestSingleLocationUpdate(locationCallback);
-        } catch (RailLocationProvider.InternalViolationException e) {
-            fail("Internal violation exception from RailLocationProvider catched!");
-        }
+        railLocationProvider.requestSingleLocationUpdate(locationCallback);
         awaitLatch(testLatch, "Callback failed to be invoked by requestSingleLocationUpdate");
     }
 }
