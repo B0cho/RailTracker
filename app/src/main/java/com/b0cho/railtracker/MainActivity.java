@@ -19,8 +19,11 @@ import android.view.MotionEvent;
 import android.widget.Toast;
 
 import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Overlay;
@@ -36,7 +39,7 @@ public class MainActivity extends AppCompatActivity implements Tracking.OnFragme
     private Tracking trackingFragment;
     private RailLocationProvider railLocationProvider;
     private LocationCallback requestSingleLocationCallback;
-
+    private LocationCallback manualLocationUpdatesCallback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +70,9 @@ public class MainActivity extends AppCompatActivity implements Tracking.OnFragme
             }
         };
 
+        manualLocationUpdatesCallback = new LocationCallback();
+
+        // single location update + center on new location
         myLocationButton.setOnClickListener(view -> {
             // no location permission granted
             if (!RailLocationProvider.checkPermissions(this)) {
@@ -83,6 +89,32 @@ public class MainActivity extends AppCompatActivity implements Tracking.OnFragme
                 // permissions were changed in meantime, provider is no longer working
                 Snackbar.make(findViewById(R.id.activityMain), "Location access permissions are lost! Location service is no longer available", Snackbar.LENGTH_SHORT).show();
             }
+        });
+
+        // manual starting frequent location update
+        myLocationButton.setOnLongClickListener(view -> {
+            // no location permission granted
+            if (!RailLocationProvider.checkPermissions(this)) {
+                ActivityCompat.requestPermissions(MainActivity.this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                        1);
+                Toast.makeText(MainActivity.this, "Permission for location not granted!", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+
+            LocationRequest manualLocationUpdatedRequest = LocationRequest.create()
+                    .setInterval(5 * 1000L)
+                    .setExpirationDuration(5 * 60_000L);
+            Task<Void> locationRequestTask = railLocationProvider.requestLocationUpdates(manualLocationUpdatesCallback, manualLocationUpdatedRequest);
+
+            locationRequestTask.addOnCompleteListener(task -> {
+                if(task.isSuccessful()) {
+                    Snackbar.make(findViewById(R.id.activityMain), "Location tracking for 5 mins activated", Snackbar.LENGTH_SHORT).show();
+                    centerFocusOnLocation(myLocationButton);
+                } else
+                    Toast.makeText(MainActivity.this, "Request for location updates failed!", Toast.LENGTH_SHORT).show();
+            });
+            return true;
         });
     }
 

@@ -13,6 +13,7 @@ import com.google.android.gms.location.LocationAvailability;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.tasks.Task;
 
 import org.osmdroid.views.overlay.mylocation.IMyLocationConsumer;
 import org.osmdroid.views.overlay.mylocation.IMyLocationProvider;
@@ -153,6 +154,19 @@ public class RailLocationProvider implements IMyLocationProvider {
                     new RailLocationProviderCallback(locationCallback),
                     Looper.getMainLooper());
         }
+    }
+
+    @SuppressLint("MissingPermission")
+    public Task<Void> requestLocationUpdates(LocationCallback locationCallback, LocationRequest locationRequest) throws IllegalStateException {
+        // checking location permissions
+        boolean isPermissionGranted = checkPermissions(mContext);
+
+        if(!isPermissionGranted)
+            throw new IllegalStateException("Location permissions not granted!");
+
+        return mFusedLocationProvider.requestLocationUpdates(locationRequest,
+                new RailLocationProviderCallback(locationCallback),
+                Looper.getMainLooper());
     }
 
     private boolean isLocationOutdated(final Location location) {
