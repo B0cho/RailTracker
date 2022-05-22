@@ -12,15 +12,17 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.SystemClock;
-import android.support.annotation.NonNull;
-import android.support.test.InstrumentationRegistry;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 
 import junit.framework.TestCase;
 
@@ -36,6 +38,10 @@ import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * DO NOT FORGET TO SET RailTracker AS MOCK LOCATION APP IN YOUR DEVICE DEVELOPER SETTINGS!
+ * Otherwise tests cannot be run and will fail!
+ */
 @RunWith(MockitoJUnitRunner.class)
 public class RailLocationProviderTest extends TestCase {
     static Context appContext;
@@ -53,9 +59,9 @@ public class RailLocationProviderTest extends TestCase {
     @BeforeClass
     public static void onBeforeClass() {
         Log.d("TEST_CLASS", "DO NOT FORGET TO SET RailTracker AS MOCK LOCATION APP IN YOUR DEVICE DEVELOPER SETTINGS!");
-        appContext = InstrumentationRegistry.getTargetContext();
+        appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         systemClock = SystemClock::elapsedRealtimeNanos;
-        elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos();
+        elapsedRealtimeNanos = systemClock.getElapsedTimeNanos();
     }
 
     @Before
@@ -89,12 +95,14 @@ public class RailLocationProviderTest extends TestCase {
     public void testRequestSingleLocationUpdate_noLastLocation() {
         // mocking last location
         Location location = new Location("MOCK1");
-        location.setElapsedRealtimeNanos(elapsedRealtimeNanos);
+        location.setElapsedRealtimeNanos(systemClock.getElapsedTimeNanos());
         location.setAccuracy(1);
         RailLocationProvider railLocationProvider = new RailLocationProvider(context, fusedLocationProviderClient, systemClock);
 
-        testRequestSingleLocationUpdate(location, railLocationProvider);
+        final Task<Void> result = testRequestSingleLocationUpdate(location, railLocationProvider);
 
+        assertNotNull(result);
+        assertTrue(result.isSuccessful());
         verify(locationCallback).onLocationResult(any(LocationResult.class));
         verify(locationConsumer).onLocationChanged(argThat(argument -> RailLocationProviderTest.LocationEquals(argument, location)), eq(railLocationProvider));
         assertTrue(RailLocationProviderTest.LocationEquals(railLocationProvider.getLastKnownLocation(), location));
@@ -104,14 +112,15 @@ public class RailLocationProviderTest extends TestCase {
     public void testRequestSingleLocationUpdate_validLastLocation() {
         Location lastLocation = new Location("MOCK1");
         lastLocation.setAccuracy(1);
-        lastLocation.setElapsedRealtimeNanos(elapsedRealtimeNanos - 22 * 1_000_000_000L);
+        lastLocation.setElapsedRealtimeNanos(systemClock.getElapsedTimeNanos() - 22 * 1_000_000_000L);
         Location newLocation = new Location("MOCK2");
         newLocation.setAccuracy(1);
-        newLocation.setElapsedRealtimeNanos(elapsedRealtimeNanos);
+        newLocation.setElapsedRealtimeNanos(systemClock.getElapsedTimeNanos());
         RailLocationProvider railLocationProvider = new RailLocationProvider(context, fusedLocationProviderClient, systemClock, lastLocation);
 
-        testRequestSingleLocationUpdate(newLocation, railLocationProvider);
+        final Task<Void> result = testRequestSingleLocationUpdate(newLocation, railLocationProvider);
 
+        assertNull(result);
         verify(locationCallback).onLocationResult(any(LocationResult.class));
         verify(locationConsumer).onLocationChanged(argThat(argument -> RailLocationProviderTest.LocationEquals(argument, lastLocation)), eq(railLocationProvider));
         assertTrue(RailLocationProviderTest.LocationEquals(railLocationProvider.getLastKnownLocation(), lastLocation));
@@ -122,14 +131,16 @@ public class RailLocationProviderTest extends TestCase {
     public void testRequestSingleLocationUpdate_expiredLastLocation() {
         Location lastLocation = new Location("MOCK1");
         lastLocation.setAccuracy(1);
-        lastLocation.setElapsedRealtimeNanos(elapsedRealtimeNanos - 42 * 1_000_000_000L);
+        lastLocation.setElapsedRealtimeNanos(systemClock.getElapsedTimeNanos() - 42 * 1_000_000_000L);
         Location newLocation = new Location("MOCK2");
         newLocation.setAccuracy(1);
-        newLocation.setElapsedRealtimeNanos(elapsedRealtimeNanos);
+        newLocation.setElapsedRealtimeNanos(systemClock.getElapsedTimeNanos() - 4 * 1_000_000_000L);
+
         RailLocationProvider railLocationProvider = new RailLocationProvider(context, fusedLocationProviderClient, systemClock, lastLocation);
 
-        testRequestSingleLocationUpdate(newLocation, railLocationProvider);
+        final Task<Void> result = testRequestSingleLocationUpdate(newLocation, railLocationProvider);
 
+        assertNotNull(result);
         verify(locationCallback).onLocationResult(any(LocationResult.class));
         verify(locationConsumer).onLocationChanged(argThat(argument -> RailLocationProviderTest.LocationEquals(argument, newLocation)), eq(railLocationProvider));
         assertTrue(RailLocationProviderTest.LocationEquals(railLocationProvider.getLastKnownLocation(), newLocation));
@@ -142,7 +153,7 @@ public class RailLocationProviderTest extends TestCase {
     - method is invalid for comparing even copied Locations.
     Therefore, a test-purpose LocationEquals method was created.
      */
-    private static boolean LocationEquals(@NonNull Location object1, Location object2) {
+    private static boolean LocationEquals(@NonNull Location object1, @NonNull Location object2) {
         return object1.equals(object2) ||
                 (object1.getElapsedRealtimeNanos() == object2.getElapsedRealtimeNanos() &&
                         object1.getLatitude() == object2.getLatitude() &&
@@ -152,7 +163,9 @@ public class RailLocationProviderTest extends TestCase {
 
     private void awaitLatch(@NonNull CountDownLatch latch, String onTimeoutMessage) {
         try {
-            latch.await(5, TimeUnit.SECONDS);
+            boolean result = latch.await(5, TimeUnit.SECONDS);
+            if(!result)
+                fail(onTimeoutMessage);
         } catch (InterruptedException e) {
             e.printStackTrace();
             fail(onTimeoutMessage);
@@ -168,7 +181,7 @@ public class RailLocationProviderTest extends TestCase {
         };
     }
 
-    private void testRequestSingleLocationUpdate(Location newLocation, RailLocationProvider railLocationProvider) {
+    private Task<Void> testRequestSingleLocationUpdate(Location newLocation, RailLocationProvider railLocationProvider) {
         CountDownLatch mockLatch = new CountDownLatch(1);
         CountDownLatch testLatch = new CountDownLatch(1);
         fusedLocationProviderClient.setMockLocation(newLocation).addOnCompleteListener(onTaskCompleted(mockLatch, "Setting last mocked location failed"));
@@ -177,9 +190,11 @@ public class RailLocationProviderTest extends TestCase {
         // mocking callback
         doAnswer(invocation -> {testLatch.countDown(); return null;}).when(locationCallback).onLocationResult(any());
 
+
         // requesting location - test
         railLocationProvider.startLocationProvider(locationConsumer);
-        railLocationProvider.requestSingleLocationUpdate(locationCallback);
+        Task<Void> task = railLocationProvider.requestSingleLocationUpdate(locationCallback);
         awaitLatch(testLatch, "Callback failed to be invoked by requestSingleLocationUpdate");
+        return task;
     }
 }

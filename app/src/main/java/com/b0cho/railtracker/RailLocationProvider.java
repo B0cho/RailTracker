@@ -6,7 +6,9 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Looper;
-import android.support.annotation.NonNull;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationAvailability;
@@ -115,8 +117,9 @@ public class RailLocationProvider implements IMyLocationProvider {
     }
 
     /**
-     * @param context Context of parent Activity
-     * @return True - when necessary permissions are granted within Context. Otherwise false.
+     * Checks if applicatiion (context) was granted with necessary permissions for Location Provider to work.
+     * @param context Context of app
+     * @return True, if app (context) has all necessary permissions. Otherwise false.
      */
     public static boolean checkPermissions(final Context context) {
         for(String permission: PERMISSIONS) {
@@ -127,12 +130,14 @@ public class RailLocationProvider implements IMyLocationProvider {
     }
 
     /**
-     * Reqeusts single location update, that is sent to locationCallback. If last location is not outdated, last cached location is returned.
+     * Requests single location update, that is sent to locationCallback. If last location is not outdated, last cached location is returned.
      * @param locationCallback Customer LocationCallback to be called when location update is obtained.
      * @throws IllegalStateException thrown when necessary permissions are not granted.
+     * @return A Task, if cached location is not available/valid and will be obtained. Null, if there is valid cached location that is sent to locationCallback.
      */
     @SuppressLint("MissingPermission")
-    public void requestSingleLocationUpdate(LocationCallback locationCallback) throws IllegalStateException {
+    @Nullable
+    public Task<Void> requestSingleLocationUpdate(LocationCallback locationCallback) throws IllegalStateException {
         // checking location permissions
         boolean isPermissionGranted = checkPermissions(mContext);
 
@@ -143,9 +148,10 @@ public class RailLocationProvider implements IMyLocationProvider {
             // Cached location is available and is not outdated
             locationCallback.onLocationResult(LocationResult.create(new ArrayList<>(Collections.singletonList(mLastLocation))));
             mMyLocationConsumer.onLocationChanged(mLastLocation, this);
+            return null;
         } else {
             // Calling single request update
-            mFusedLocationProvider.requestLocationUpdates(
+            return mFusedLocationProvider.requestLocationUpdates(
                     LocationRequest.create()
                         .setNumUpdates(1)
                         .setInterval(10 * 1000L)
@@ -156,7 +162,15 @@ public class RailLocationProvider implements IMyLocationProvider {
         }
     }
 
+    /**
+     * Requests frequent location updates, that are delivered to consumers (LiveData, mapview)
+     * @param locationCallback - Location callback, that is executed each location update occurs
+     * @param locationRequest - Location request to be executed.
+     * @return Task, that is run to obtain location updates.
+     * @throws IllegalStateException if, necessary permission is not granted
+     */
     @SuppressLint("MissingPermission")
+    @NonNull
     public Task<Void> requestLocationUpdates(LocationCallback locationCallback, LocationRequest locationRequest) throws IllegalStateException {
         // checking location permissions
         boolean isPermissionGranted = checkPermissions(mContext);
@@ -169,10 +183,12 @@ public class RailLocationProvider implements IMyLocationProvider {
                 Looper.getMainLooper());
     }
 
-    private boolean isLocationOutdated(final Location location) {
-        if(location != null) {
-            return systemClock.getElapsedTimeNanos() - location.getElapsedRealtimeNanos() > locationExpirationSec * 1_000_000_000L;
-        } else
-            return true;
+    /**
+     * Checks, if provided Location is outdated in acc. to class expiration time
+     * @param location to be checked
+     * @return True, if location is outdated and new should be obtained. Otherwise false.
+     */
+    private boolean isLocationOutdated(final @NonNull Location location) {
+        return systemClock.getElapsedTimeNanos() - location.getElapsedRealtimeNanos() > locationExpirationSec * 1_000_000_000L;
     }
 }

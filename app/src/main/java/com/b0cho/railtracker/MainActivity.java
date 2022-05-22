@@ -1,133 +1,63 @@
 package com.b0cho.railtracker;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.os.Bundle;
-import android.os.SystemClock;
-import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.util.Pair;
-import android.util.SparseArray;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
+import android.view.View;
 import android.widget.Toast;
 
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnCompleteListener;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.lifecycle.ViewModelProvider;
+
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 
-import org.osmdroid.views.MapView;
-import org.osmdroid.views.overlay.Overlay;
-
-import java.util.Set;
+import java.util.Map;
 
 // MAIN ACTIVITY
-public class MainActivity extends AppCompatActivity implements Tracking.OnFragmentInteractionListener {
-
-    private Menu toolbarMenu = null;
-    private Menu sourcesMenu = null;
-    private Menu overlaysMenu = null;
-    private Tracking trackingFragment;
-    private RailLocationProvider railLocationProvider;
-    private LocationCallback requestSingleLocationCallback;
-    private LocationCallback manualLocationUpdatesCallback;
+public class MainActivity extends AppCompatActivity {
+    private MainActivityViewModel viewModel;
+    private Menu sourcesMenu;
+    private Menu overlaysMenu;
+    private FloatingActionButton myLocationButton;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // obtaining viewmodel
+        viewModel = new ViewModelProvider(this).get(MainActivityViewModel.class);
 
         // setting toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        // setting tracking fragment
-        trackingFragment = Tracking.newInstance();
-
-        // setting tracking to fragment container
-        getSupportFragmentManager().beginTransaction().add(R.id.trackingFragmentContainer, trackingFragment).commit();
-
-        // initializing location provider
-        railLocationProvider = new RailLocationProvider(getApplicationContext(), LocationServices.getFusedLocationProviderClient(this), SystemClock::elapsedRealtimeNanos);
-
         // setting listeners and callbacks
-        final FloatingActionButton myLocationButton = findViewById(R.id.myLocationActionButton);
+        myLocationButton = findViewById(R.id.myLocationActionButton);
 
-        // setting callbacks
-        requestSingleLocationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
-                centerFocusOnLocation(myLocationButton);
+        viewModel.isLocationFollowed().observe(this, follow -> {
+            if(follow) {
+                myLocationButton.setFocusableInTouchMode(true);
+                myLocationButton.requestFocus();
+            } else {
+                myLocationButton.clearFocus();
+                myLocationButton.setFocusableInTouchMode(false);
             }
-        };
-
-        manualLocationUpdatesCallback = new LocationCallback();
+        });
 
         // single location update + center on new location
-        myLocationButton.setOnClickListener(view -> {
-            // no location permission granted
-            if (!RailLocationProvider.checkPermissions(this)) {
-                ActivityCompat.requestPermissions(MainActivity.this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
-                    1);
-                Toast.makeText(MainActivity.this, "Permission for location not granted!", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            try {
-                railLocationProvider.requestSingleLocationUpdate(requestSingleLocationCallback);
-            }
-            catch (IllegalStateException e) {
-                // permissions were changed in meantime, provider is no longer working
-                Snackbar.make(findViewById(R.id.activityMain), "Location access permissions are lost! Location service is no longer available", Snackbar.LENGTH_SHORT).show();
-            }
-        });
+        myLocationButton.setOnClickListener(this::onMyLocationButtonClick);
 
         // manual starting frequent location update
-        myLocationButton.setOnLongClickListener(view -> {
-            // no location permission granted
-            if (!RailLocationProvider.checkPermissions(this)) {
-                ActivityCompat.requestPermissions(MainActivity.this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
-                        1);
-                Toast.makeText(MainActivity.this, "Permission for location not granted!", Toast.LENGTH_SHORT).show();
-                return true;
-            }
+        myLocationButton.setOnLongClickListener(this::onMyLocationButtonLongClick);
 
-            LocationRequest manualLocationUpdatedRequest = LocationRequest.create()
-                    .setInterval(5 * 1000L)
-                    .setExpirationDuration(5 * 60_000L);
-            Task<Void> locationRequestTask = railLocationProvider.requestLocationUpdates(manualLocationUpdatesCallback, manualLocationUpdatedRequest);
-
-            locationRequestTask.addOnCompleteListener(task -> {
-                if(task.isSuccessful()) {
-                    Snackbar.make(findViewById(R.id.activityMain), "Location tracking for 5 mins activated", Snackbar.LENGTH_SHORT).show();
-                    centerFocusOnLocation(myLocationButton);
-                } else
-                    Toast.makeText(MainActivity.this, "Request for location updates failed!", Toast.LENGTH_SHORT).show();
-            });
-            return true;
-        });
-    }
-
-
-    private void centerFocusOnLocation(@NonNull FloatingActionButton myLocationButton) {
-        // button handling - position found
-        myLocationButton.setFocusableInTouchMode(true);
-        myLocationButton.requestFocus();
-
-        trackingFragment.getLocationOverlay().enableFollowLocation();
-
-        // TODO: add handling position on map -> draw position
-        trackingFragment.showLocationOverlay(true);
     }
 
     @Override
@@ -136,112 +66,125 @@ public class MainActivity extends AppCompatActivity implements Tracking.OnFragme
         inflater.inflate(R.menu.toolbar_menu, menu);
 
         // assigning menus
-        toolbarMenu = menu;
-        sourcesMenu = toolbarMenu.findItem(R.id.tileSourceSubmenu).getSubMenu();
-        overlaysMenu = toolbarMenu.findItem(R.id.overlaysSubmenu).getSubMenu();
+        sourcesMenu = menu.findItem(R.id.tileSourceSubmenu).getSubMenu();
+        overlaysMenu = menu.findItem(R.id.overlaysSubmenu).getSubMenu();
 
-        // setting sources
-        initMenuSources();
-        try {
-            setTilesSourceSelection(trackingFragment.getCurrentTileSourceKey());
-        } catch (Exception e) {
-            // TODO: add handling
+        // creating source menu items
+        for (Map.Entry<Integer, String> entry :
+                viewModel.offeredSourcesMenuInput().entrySet()) {
+            final MenuItem menuItem = sourcesMenu.add(R.id.tileSourceGroup, entry.getKey(), Menu.NONE, entry.getValue());
+            menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
         }
+        sourcesMenu.setGroupCheckable(R.id.tileSourceGroup, true, true);
 
-        // setting overlays
-        initMenuOverlays();
-        try {
-            setOverlaysSelection(trackingFragment.getCurrentOverlaysKeys());
-        } catch (Exception e) {
-            // TODO: add handling
-        }
-        return true;
-    }
-
-    private void setOverlaysSelection(Set<Integer> currentOverlaysKeys) throws Exception {
-        /*final MenuItem menuItem = overlaysMenu.findItem(key);
-        if (menuItem == null)
-            throw new Exception("Invalid selection key - tiles source");
-        menuItem.setChecked(true);*/
-        Exception e = null;
-        for (Integer key : currentOverlaysKeys) {
-            final MenuItem menuItem = overlaysMenu.findItem(key);
-            if (menuItem == null) {
-                e = new Exception("Invalid selection key - overlays");
-                continue;
-            }
-            menuItem.setChecked(true);
-        }
-        if (e != null)
-            throw e;
-    }
-
-    private void initMenuOverlays() {
-        final SparseArray<Pair<String, Overlay>> overlaySparseArray = trackingFragment.getOfferedOverlays();
-        for (int i = 0; i < overlaySparseArray.size(); i++) {
-            final MenuItem menuItem = overlaysMenu.add(R.id.overlaySourceGroup, overlaySparseArray.keyAt(i), Menu.NONE, overlaySparseArray.valueAt(i).first);
+        // creating source menu items
+        for (Map.Entry<Integer, String> entry :
+                viewModel.offeredOverlaysMenuInput().entrySet()) {
+            final MenuItem menuItem = overlaysMenu.add(R.id.overlaySourceGroup, entry.getKey(), Menu.NONE, entry.getValue());
             menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
             menuItem.setCheckable(true);
         }
+
+        // setting viewmodel observers
+        viewModel.getSelectedTileSourceId().observe(this, key -> {
+            final MenuItem menuitem = sourcesMenu.findItem(key);
+            menuitem.setChecked(!menuitem.isChecked());
+        });
+
+        viewModel.getSelectedOverlaysIds().observe(this, keys -> {
+            for(int id = 0; id < overlaysMenu.size(); id++) {
+                overlaysMenu.findItem(id).setChecked(keys.contains(id));
+            }
+        });
+
+        return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // tiles
-        if (item.getGroupId() == R.id.tileSourceGroup && Tracking.offeredSources().get(item.getItemId()) != null) {
-            try {
-                trackingFragment.setTileSource(item.getItemId());
-            } catch (Exception e) {
-//                TODO: add handling
-            }
-            item.setChecked(true);
+        final int groupId = item.getGroupId();
+        final int itemId = item.getItemId();
+        // tile sources
+        if (groupId == R.id.tileSourceGroup && viewModel.offeredSourcesMenuInput().containsKey(itemId) ) {
+            viewModel.setTileSourceSelection(itemId);
             return true;
         }
 
         // overlays
-        if (item.getGroupId() == R.id.overlaySourceGroup && trackingFragment.getOfferedOverlays().get(item.getItemId()) != null) {
-            try {
-                trackingFragment.setOverlays(item.getItemId());
-            } catch (Exception e) {
-                // TODO: add handling
-            }
-            item.setChecked(!item.isChecked());
+        if (groupId == R.id.overlaySourceGroup && viewModel.offeredOverlaysMenuInput().containsKey(itemId)) {
+            viewModel.updateOverlaysSelection(itemId, !item.isChecked());
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    private void initMenuSources() {
-        for (int i = 0; i < Tracking.offeredSources().size(); i++) {
-            final MenuItem menuItem = sourcesMenu.add(R.id.tileSourceGroup, Tracking.offeredSources().keyAt(i), Menu.NONE, Tracking.offeredSources().valueAt(i).name());
-            menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
-            menuItem.setCheckable(true);
+    private void onMyLocationButtonClick(View view) {
+        // no location permission granted
+        if (!viewModel.hasLocationPermissions(getApplicationContext())) {
+            requestPermissions();
+            return;
         }
-        sourcesMenu.setGroupCheckable(R.id.tileSourceGroup, true, true);
-    }
 
-    @SuppressLint("ClickableViewAccessibility")
-    @Override
-    public void initializeMapViewListeners(MapView mapView) {
-        // listener for losing location tracking after moving the map
-        final FloatingActionButton myLocationButton = findViewById(R.id.myLocationActionButton);
-        mapView.setOnTouchListener((view1, motionEvent) -> {
-            super.onTouchEvent(motionEvent);
-            if(motionEvent.getAction() == MotionEvent.ACTION_MOVE) {
-                myLocationButton.setFocusableInTouchMode(false);
-                myLocationButton.clearFocus();
-                trackingFragment.getLocationOverlay().disableFollowLocation();
-            }
-            return false;
+        // sending request and getting result task
+        final Task<Void> locationRequestTask;
+        try {
+            locationRequestTask = viewModel.requestSingleLocationUpdate();
+        } catch (IllegalStateException e) {
+            // permissions were changed in meantime, provider is no longer working
+            Snackbar.make(findViewById(R.id.activityMain), "Location access permissions are lost! Location service is no longer available", Snackbar.LENGTH_SHORT).show();
+            return;
+        }
+
+        // set reaction, if no task was returned (cached result)
+        if(locationRequestTask == null) {
+            viewModel.setFollowingLocation(true);
+            viewModel.setShowingLocation(true);
+            return;
+        }
+
+        // setting reaction, when task was started and is successful
+        locationRequestTask.addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                viewModel.setFollowingLocation(true);
+                viewModel.setShowingLocation(true);
+            } else
+                Toast.makeText(this, "Request for location failed!", Toast.LENGTH_SHORT).show();
         });
-
-        trackingFragment.getLocationOverlay().enableMyLocation(railLocationProvider);
     }
 
-    private void setTilesSourceSelection(final int key) throws Exception {
-        final MenuItem menuItem = sourcesMenu.findItem(key);
-        if (menuItem == null)
-            throw new Exception("Invalid selection key - tiles source");
-        menuItem.setChecked(true);
+    private boolean onMyLocationButtonLongClick(View view) {
+        // no location permission granted
+        if (!viewModel.hasLocationPermissions(getApplicationContext())) {
+            requestPermissions();
+            return true;
+        }
+
+        // sending request and getting result task
+        final Task<Void> locationRequestTask;
+        try {
+            locationRequestTask = viewModel.requestLocationUpdates(viewModel.manualLocationUpdateRequest);
+        } catch (IllegalStateException e) {
+            Snackbar.make(findViewById(R.id.activityMain), "Location access permissions are lost! Location service is no longer available", Snackbar.LENGTH_SHORT).show();
+            return true;
+        }
+
+        // setting reaction, when task is successful
+        locationRequestTask.addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                Snackbar.make(findViewById(R.id.activityMain), "Location tracking for 5 mins activated", Snackbar.LENGTH_SHORT).show();
+                viewModel.setFollowingLocation(true);
+                viewModel.setShowingLocation(true);
+            } else
+                Toast.makeText(this, "Request for location updates failed!", Toast.LENGTH_SHORT).show();
+        });
+        return true;
     }
+
+    private void requestPermissions() {
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                1);
+        Toast.makeText(this, "Permission for location not granted!", Toast.LENGTH_SHORT).show();
+    }
+
 }

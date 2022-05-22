@@ -33,7 +33,7 @@
         <menu>
             <group
                 android:id="@+id/overlaySourceGroup"
-                android:checkableBehavior="single">
+                android:checkableBehavior="all">
                 <!-- OVERLAY SOURCES MENU ITEMS ADDED DYNAMICALLY -->
             </group>
         </menu>
