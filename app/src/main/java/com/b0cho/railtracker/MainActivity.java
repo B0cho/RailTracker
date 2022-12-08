@@ -20,7 +20,10 @@ import com.google.android.material.snackbar.Snackbar;
 
 import java.util.Map;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
 // MAIN ACTIVITY
+@AndroidEntryPoint
 public class MainActivity extends AppCompatActivity {
     private MainActivityViewModel viewModel;
     private Menu sourcesMenu;

@@ -24,11 +24,14 @@ import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import java.util.Objects;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
 /**
  * MapFragment, used as map view for MainActivity
  * Working with MainActivityViewModel
  * Capable to switch tile sources and overlays
  */
+@AndroidEntryPoint
 public class MapFragment extends Fragment {
     private MainActivityViewModel viewModel;
     private MapView mapView;
@@ -49,6 +52,8 @@ public class MapFragment extends Fragment {
         Configuration.getInstance().load(context, PreferenceManager.getDefaultSharedPreferences(context));
 
         mapView = view.findViewById(R.id.mapView);
+        mapView.setDestroyMode(false); // used to avoid mWriter getting null after view re-creation
+
         locationOverlay = new MyLocationNewOverlay(mapView);
 
         return view;
@@ -96,18 +101,6 @@ public class MapFragment extends Fragment {
             mapView.invalidate();
         });
 
-        // following location
-        locationObserver = location -> mapView.getController().animateTo(location);
-        viewModel.isLocationFollowed().observe(requireActivity(), follow -> {
-            if(follow) {
-                locationOverlay.enableFollowLocation();
-                viewModel.getLastPosition().observe(requireActivity(), locationObserver);
-            } else {
-                locationOverlay.disableFollowLocation();
-                viewModel.getLastPosition().removeObserver(locationObserver);
-            }
-        });
-
         // showing location
         viewModel.isLocationShown().observe(requireActivity(), show -> {
             showLocationOverlay(show);
@@ -121,6 +114,18 @@ public class MapFragment extends Fragment {
         // setting mapview control
         mapView.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.NEVER);
         mapView.setMultiTouchControls(true);
+
+        // following location
+        locationObserver = location -> mapView.getController().animateTo(location);
+        viewModel.isLocationFollowed().observe(requireActivity(), follow -> {
+            if(follow) {
+                locationOverlay.enableFollowLocation();
+                viewModel.getLastPosition().observe(requireActivity(), locationObserver);
+            } else {
+                locationOverlay.disableFollowLocation();
+                viewModel.getLastPosition().removeObserver(locationObserver);
+            }
+        });
     }
 
     private void showLocationOverlay(Boolean show) {

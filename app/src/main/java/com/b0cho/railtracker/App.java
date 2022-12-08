@@ -5,7 +5,10 @@ import android.os.SystemClock;
 
 import com.google.android.gms.location.LocationServices;
 
-public class App extends Application {
+import dagger.hilt.android.HiltAndroidApp;
+
+@HiltAndroidApp
+public final class App extends Application {
     private RailLocationProvider railLocationProvider;
 
     @Override

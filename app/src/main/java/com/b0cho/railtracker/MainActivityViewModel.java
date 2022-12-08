@@ -24,12 +24,15 @@ import org.osmdroid.views.overlay.mylocation.IMyLocationProvider;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- *
- */
+import javax.inject.Inject;
+
+import dagger.hilt.android.lifecycle.HiltViewModel;
+
+@HiltViewModel
 public class MainActivityViewModel extends AndroidViewModel {
     private final RailLocationProvider railLocationProvider;
 
@@ -49,16 +52,20 @@ public class MainActivityViewModel extends AndroidViewModel {
     private final MutableLiveData<Boolean> followingLocation = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> showingLocation = new MutableLiveData<>(false);
 
-    public MainActivityViewModel(@NonNull Application application) {
+    @Inject
+    public MainActivityViewModel(
+            @NonNull Application application,
+            Map<String, ITileSource> tileSources,
+            Map<String, Overlay> overlaysSources) {
         super(application);
-        OSM_LayersProvider mapLayersProvider = new OSM_LayersProvider(application);
         railLocationProvider = ((App)getApplication()).getRailLocationProvider();
+        // TODO: Change to injection from location module
 
         // creating hashmap of offered sources for views + setting initial value
         int key = 0;
-        for (final ITileSource source :
-                OSM_LayersProvider.offeredSources) {
-            keyedTileSources.put(key, source);
+        for (Map.Entry<String, ITileSource> entry :
+                tileSources.entrySet()) {
+            keyedTileSources.put(key, entry.getValue());
             key++;
         }
         setTileSourceSelection(0);
@@ -66,9 +73,9 @@ public class MainActivityViewModel extends AndroidViewModel {
         // creating hashmap of offered overlays for views
         selectedOverlaysHashMap.setValue(new HashMap<>());
         key = 0;
-        for (final Pair<String, Overlay> overlay :
-                mapLayersProvider.offeredOverlays) {
-            keyedOverlays.put(key, overlay);
+        for (Map.Entry<String, Overlay> entry :
+                overlaysSources.entrySet()) {
+            keyedOverlays.put(key, new Pair<>(entry.getKey(), entry.getValue()));
             key++;
         }
         updateOverlaysSelection(0, true);
