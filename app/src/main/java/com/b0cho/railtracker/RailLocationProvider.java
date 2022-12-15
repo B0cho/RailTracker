@@ -18,10 +18,11 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.tasks.Task;
 
 import org.osmdroid.views.overlay.mylocation.IMyLocationConsumer;
-import org.osmdroid.views.overlay.mylocation.IMyLocationProvider;
 
 import java.util.ArrayList;
 import java.util.Collections;
+
+import javax.inject.Inject;
 
 /**
  * RailLocationProvider
@@ -29,7 +30,7 @@ import java.util.Collections;
  * Implements IMyLocationConsumer, so it can also feed OSM mapView with location updates.
  * Class caches last available location and sends an update request only when it is outdated acc. to set expiration time.
  */
-public class RailLocationProvider implements IMyLocationProvider {
+public class RailLocationProvider implements ILocationProvider {
     public RailLocationProvider(Context context, FusedLocationProviderClient fusedLocationProviderClient, ISystemClock systemClock, Location lastLocation) {
         this(context, fusedLocationProviderClient, systemClock);
         mLastLocation = lastLocation;
@@ -85,6 +86,7 @@ public class RailLocationProvider implements IMyLocationProvider {
      * @param systemClock Clock to be used for timestamps comparison
      */
     @SuppressLint("MissingPermission")
+    @Inject
     public RailLocationProvider(@NonNull Context context, @NonNull FusedLocationProviderClient fusedLocationProviderClient, ISystemClock systemClock) {
         mContext = context;
         mFusedLocationProvider = fusedLocationProviderClient;
@@ -137,6 +139,7 @@ public class RailLocationProvider implements IMyLocationProvider {
      */
     @SuppressLint("MissingPermission")
     @Nullable
+    @Override
     public Task<Void> requestSingleLocationUpdate(LocationCallback locationCallback) throws IllegalStateException {
         // checking location permissions
         boolean isPermissionGranted = checkPermissions(mContext);
@@ -171,6 +174,7 @@ public class RailLocationProvider implements IMyLocationProvider {
      */
     @SuppressLint("MissingPermission")
     @NonNull
+    @Override
     public Task<Void> requestLocationUpdates(LocationCallback locationCallback, LocationRequest locationRequest) throws IllegalStateException {
         // checking location permissions
         boolean isPermissionGranted = checkPermissions(mContext);

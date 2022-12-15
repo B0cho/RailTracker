@@ -34,7 +34,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 
 @HiltViewModel
 public class MainActivityViewModel extends AndroidViewModel {
-    private final RailLocationProvider railLocationProvider;
+    private final ILocationProvider locationProvider;
 
     private final LocationCallback singleLocationRequestCallback;
     private LocationCallback manualLocationUpdatesCallback;
@@ -56,10 +56,10 @@ public class MainActivityViewModel extends AndroidViewModel {
     public MainActivityViewModel(
             @NonNull Application application,
             Map<String, ITileSource> tileSources,
-            Map<String, Overlay> overlaysSources) {
+            Map<String, Overlay> overlaysSources,
+            @NonNull ILocationProvider locationProvider) {
         super(application);
-        railLocationProvider = ((App)getApplication()).getRailLocationProvider();
-        // TODO: Change to injection from location module
+        this.locationProvider = locationProvider;
 
         // creating hashmap of offered sources for views + setting initial value
         int key = 0;
@@ -133,7 +133,7 @@ public class MainActivityViewModel extends AndroidViewModel {
                 lastPosition.setValue(new GeoPoint(locationResult.getLastLocation()));
             }
         };
-        return railLocationProvider.requestLocationUpdates(manualLocationUpdatesCallback, locationRequest);
+        return locationProvider.requestLocationUpdates(manualLocationUpdatesCallback, locationRequest);
     }
 
     /**
@@ -143,7 +143,7 @@ public class MainActivityViewModel extends AndroidViewModel {
      */
     @Nullable
     public final Task<Void> requestSingleLocationUpdate() throws IllegalStateException {
-        return railLocationProvider.requestSingleLocationUpdate(singleLocationRequestCallback);
+        return locationProvider.requestSingleLocationUpdate(singleLocationRequestCallback);
     }
 
     /**
@@ -199,7 +199,7 @@ public class MainActivityViewModel extends AndroidViewModel {
      * @return IMyLocationProvider, that can be used to feed MapView
      */
     public IMyLocationProvider getMyLocationProvider() {
-        return railLocationProvider;
+        return locationProvider;
     }
 
     /**
