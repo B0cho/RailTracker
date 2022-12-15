@@ -36,9 +36,9 @@ public class OSM_OverlaysModule {
                 256,
                 ".png",
                 new String[]{
-                        "http://a.tiles.openrailwaymap.org/standard/",
-                        "http://b.tiles.openrailwaymap.org/standard/",
-                        "http://c.tiles.openrailwaymap.org/standard/"}));
+                        "https://a.tiles.openrailwaymap.org/standard/",
+                        "https://b.tiles.openrailwaymap.org/standard/",
+                        "https://c.tiles.openrailwaymap.org/standard/"}));
         final TilesOverlay tilesOverlay = new TilesOverlay(tileProvider, context);
         tilesOverlay.setLoadingBackgroundColor(Color.TRANSPARENT);
         return tilesOverlay;
