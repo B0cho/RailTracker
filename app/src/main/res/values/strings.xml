@@ -1,15 +1,24 @@
 <resources>
     <string name="app_name">RailTracker</string>
     <string name="settings">Settings</string>
-    <string name="MAPNIK_source">MAPNIK</string>
     <string name="tileSourceSubmenu">Tile sources</string>
     <string name="overlaysSubmenu">Overlays</string>
-    <string name="ORM_overlay">OpenRailwayMap</string>
+    <string name="title_activity_settings">Settings</string>
+    <string name="locationButtonContDescription">My Location Button</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="bundleTileSourceKey">tileSourceKey</string>
-    <string name="bundleOverlaysKey">overlaysKey</string>
-    <string name="ORMStandard_name">OpenRailwayMap - Infrastructure</string>
-    <string name="locationButtonContDescription">myLocationButton</string>
+
+    <!-- Preference Titles -->
+    <string name="otherSettings_header">Others</string>
+
+    <!-- Messages Preferences -->
+    <string name="clear_userdata_title">Clear user data</string>
+    <string name="clear_userdata_summary">Remove stored user data from device memory</string>
+    <string name="clear_userdata_key">clear_userdata_key</string>
+    <string name="clear_userdata_dialog_message">Are you sure?</string>
+
+
+    <!-- Dialogs -->
+    <string name="dialog_confirm_button">Confirm</string>
+    <string name="dialog_cancel_button">Cancel</string>
+
 </resources>

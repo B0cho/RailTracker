@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string-array name="ORM_tileUrls">
-        <item>http://a.tiles.openrailwaymap.org/standard/</item>
-        <item>http://b.tiles.openrailwaymap.org/standard/</item>
-        <item>http://c.tiles.openrailwaymap.org/standard/</item>
-    </string-array>
-</resources>

@@ -1,6 +1,7 @@
 package com.b0cho.railtracker;
 
 import android.Manifest;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -116,6 +117,13 @@ public class MainActivity extends AppCompatActivity {
         // overlays
         if (groupId == R.id.overlaySourceGroup && viewModel.offeredOverlaysMenuInput().containsKey(itemId)) {
             viewModel.updateOverlaysSelection(itemId, !item.isChecked());
+            return true;
+        }
+
+        // settings menu button
+        if(itemId == R.id.settingsMenuButton) {
+            final Intent openSettingsIntent = new Intent(this, SettingsActivity.class);
+            startActivity(openSettingsIntent);
             return true;
         }
         return super.onOptionsItemSelected(item);
