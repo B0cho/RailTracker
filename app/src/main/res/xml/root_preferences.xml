@@ -1,9 +1,20 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
-    <PreferenceCategory app:title="@string/otherSettings_header">
+    <PreferenceCategory
+        app:key="@string/location_cat_key"
+        app:title="@string/Location_settings_header"
+        app:shouldDisableView="true">
+        <DropDownPreference
+            app:key="@string/location_timeout_key"
+            app:title="@string/location_timeout_title"
+            app:entries="@array/location_timeout_entries"
+            app:entryValues="@array/location_timeout_values"
+            app:useSimpleSummaryProvider="true"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/Other_settings_header">
         <Preference
             app:key="@string/clear_userdata_key"
             app:title="@string/clear_userdata_title"
             app:summary="@string/clear_userdata_summary" />
     </PreferenceCategory>
-
 </PreferenceScreen>

@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Looper;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -31,6 +32,8 @@ import javax.inject.Inject;
  * Class caches last available location and sends an update request only when it is outdated acc. to set expiration time.
  */
 public class RailLocationProvider implements ILocationProvider {
+    private final static String d_TAG = "RailLocationProvider: ";
+
     public RailLocationProvider(Context context, FusedLocationProviderClient fusedLocationProviderClient, ISystemClock systemClock, Location lastLocation) {
         this(context, fusedLocationProviderClient, systemClock);
         mLastLocation = lastLocation;
@@ -47,7 +50,7 @@ public class RailLocationProvider implements ILocationProvider {
     private final Context mContext;
 
     private IMyLocationConsumer mMyLocationConsumer;
-    private final long locationExpirationSec = 25;
+    private long locationExpirationSec = 25;
 
     /**
      * NECESSARY PERMISSIONS FOR  RailLocationProvider
@@ -123,7 +126,8 @@ public class RailLocationProvider implements ILocationProvider {
      * @param context Context of app
      * @return True, if app (context) has all necessary permissions. Otherwise false.
      */
-    public static boolean checkPermissions(final Context context) {
+    @Override
+    public boolean checkPermissions(final Context context) {
         for(String permission: PERMISSIONS) {
             if(context.checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED)
                 return false;
@@ -142,7 +146,7 @@ public class RailLocationProvider implements ILocationProvider {
     @Override
     public Task<Void> requestSingleLocationUpdate(LocationCallback locationCallback) throws IllegalStateException {
         // checking location permissions
-        boolean isPermissionGranted = checkPermissions(mContext);
+        boolean isPermissionGranted = this.checkPermissions(mContext);
 
         if(!isPermissionGranted)
             throw new IllegalStateException("Location permissions not granted!");
@@ -177,7 +181,7 @@ public class RailLocationProvider implements ILocationProvider {
     @Override
     public Task<Void> requestLocationUpdates(LocationCallback locationCallback, LocationRequest locationRequest) throws IllegalStateException {
         // checking location permissions
-        boolean isPermissionGranted = checkPermissions(mContext);
+        boolean isPermissionGranted = this.checkPermissions(mContext);
 
         if(!isPermissionGranted)
             throw new IllegalStateException("Location permissions not granted!");
@@ -194,5 +198,17 @@ public class RailLocationProvider implements ILocationProvider {
      */
     private boolean isLocationOutdated(final @NonNull Location location) {
         return systemClock.getElapsedTimeNanos() - location.getElapsedRealtimeNanos() > locationExpirationSec * 1_000_000_000L;
+    }
+
+
+    /**
+     * Sets timeout in seconds for location expiration
+     * @param locationExpirationSec New value of location timeout in seconds (must be > 0 s)
+     */
+    @Override
+    public void setLocationTimeoutSec(long locationExpirationSec) {
+        assert locationExpirationSec > 0;
+        this.locationExpirationSec = locationExpirationSec;
+        Log.d(d_TAG, "Location expiration timeout set to " + locationExpirationSec);
     }
 }

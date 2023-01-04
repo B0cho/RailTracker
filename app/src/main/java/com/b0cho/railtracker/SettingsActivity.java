@@ -10,6 +10,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.Preference;
+import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceFragmentCompat;
 
 import java.util.Objects;
@@ -38,6 +39,9 @@ public class SettingsActivity extends AppCompatActivity {
 
     @AndroidEntryPoint
     public static class SettingsFragment extends PreferenceFragmentCompat {
+        @Inject
+        ILocationProvider appLocationProvider;
+
         @ClearUserdataDialogBuilder
         @Inject
         AlertDialog.Builder clearUserdataDialogBuilder;
@@ -67,6 +71,24 @@ public class SettingsActivity extends AppCompatActivity {
                 clearUserdataDialogBuilder.create().show();
                 return true;
             });
+
+            // Location timeout expiration
+            Preference locationTimeoutPreference = Objects.requireNonNull(getPreferenceScreen().findPreference(getString(R.string.location_timeout_key)));
+            locationTimeoutPreference.setOnPreferenceChangeListener((preference, newValue) -> {
+                final long longValue = Long.parseLong(newValue.toString());
+                assert longValue > 0;
+                appLocationProvider.setLocationTimeoutSec(longValue);
+                return true;
+            });
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+
+            // disable location settings category if location permission is not granted
+            PreferenceCategory locationGPSCat = Objects.requireNonNull(getPreferenceScreen().findPreference(getString(R.string.location_cat_key)));
+            locationGPSCat.setEnabled(appLocationProvider.checkPermissions(requireContext().getApplicationContext()));
         }
     }
 }

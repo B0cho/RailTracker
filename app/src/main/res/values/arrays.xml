@@ -1,0 +1,16 @@
+<resources>
+    <!-- Location timeout expiration Preference -->
+    <string-array name="location_timeout_entries">
+        <item>5 s</item>
+        <item>10 s</item>
+        <item>25 s</item>
+        <item>1 min</item>
+    </string-array>
+    <string-array name="location_timeout_values">
+        <item>5</item>
+        <item>10</item>
+        <item>25</item>
+        <item>60</item>
+    </string-array>
+
+</resources>

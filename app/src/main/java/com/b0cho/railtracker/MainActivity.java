@@ -3,6 +3,7 @@ package com.b0cho.railtracker;
 import android.Manifest;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -14,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.preference.PreferenceManager;
 
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -30,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     private Menu sourcesMenu;
     private Menu overlaysMenu;
     private FloatingActionButton myLocationButton;
+    private final static String d_TAG = "MainActivity: ";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -163,6 +166,9 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Sending request for 5 mins long location updates
+     */
     private boolean onMyLocationButtonLongClick(View view) {
         // no location permission granted
         if (!viewModel.hasLocationPermissions(getApplicationContext())) {
@@ -173,7 +179,17 @@ public class MainActivity extends AppCompatActivity {
         // sending request and getting result task
         final Task<Void> locationRequestTask;
         try {
-            locationRequestTask = viewModel.requestLocationUpdates(viewModel.manualLocationUpdateRequest);
+            // getting values for request from preferences
+            final long intervalSec = Long.parseLong(PreferenceManager
+                    .getDefaultSharedPreferences(getApplicationContext())
+                    .getString(getString(R.string.location_timeout_key), "25"));
+            final long expirationSec = 5 * 60;
+            Log.d(d_TAG, "Preparing manual location updates request: interval: " + intervalSec + " expiration: " + expirationSec);
+
+            // sending request
+            locationRequestTask = viewModel.requestLocationUpdates(viewModel.manualLocationUpdateRequest
+                    .setInterval(intervalSec * 1000L)
+                    .setExpirationDuration(expirationSec * 1000L));
         } catch (IllegalStateException e) {
             Snackbar.make(findViewById(R.id.activityMain), "Location access permissions are lost! Location service is no longer available", Snackbar.LENGTH_SHORT).show();
             return true;

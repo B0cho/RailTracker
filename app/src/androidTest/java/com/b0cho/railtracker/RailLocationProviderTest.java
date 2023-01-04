@@ -75,12 +75,13 @@ public class RailLocationProviderTest extends TestCase {
 
     @Test
     public void testCheckPermissions() {
+        RailLocationProvider railLocationProvider = new RailLocationProvider(context, fusedLocationProviderClient, systemClock);
         // testing context without needed permissions
         when(context.checkSelfPermission(anyString())).thenReturn(PackageManager.PERMISSION_DENIED);
-        assertFalse(RailLocationProvider.checkPermissions(context));
+        assertFalse(railLocationProvider.checkPermissions(context));
         // testing context with permissions
         when(context.checkSelfPermission(argThat(argument -> Arrays.asList(RailLocationProvider.PERMISSIONS).contains(argument)))).thenReturn(PackageManager.PERMISSION_GRANTED);
-        assertTrue(RailLocationProvider.checkPermissions(context));
+        assertTrue(railLocationProvider.checkPermissions(context));
     }
 
     @Test(expected = IllegalStateException.class)

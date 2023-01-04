@@ -90,9 +90,7 @@ public class MainActivityViewModel extends AndroidViewModel {
         // setting callaback for location update (to differentiate calls)
         manualLocationUpdatesCallback = null;
 
-        manualLocationUpdateRequest = LocationRequest.create()
-                .setInterval(5 * 1000L)
-                .setExpirationDuration(5 * 60_000L);
+        manualLocationUpdateRequest = LocationRequest.create();
     }
 
     /**
@@ -152,7 +150,7 @@ public class MainActivityViewModel extends AndroidViewModel {
      * @return True, if app (context) has all necessary permissions. Otherwise false.
      */
     public Boolean hasLocationPermissions(Context context) {
-        return RailLocationProvider.checkPermissions(context);
+        return locationProvider.checkPermissions(context);
     }
 
     /**
