@@ -17,6 +17,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -134,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void onMyLocationButtonClick(View view) {
         // no location permission granted
-        if (!viewModel.hasLocationPermissions(getApplicationContext())) {
+        if(!viewModel.locationProvider.hasPermissions(getApplicationContext())) {
             requestPermissions();
             return;
         }
@@ -142,17 +143,11 @@ public class MainActivity extends AppCompatActivity {
         // sending request and getting result task
         final Task<Void> locationRequestTask;
         try {
-            locationRequestTask = viewModel.requestSingleLocationUpdate();
-        } catch (IllegalStateException e) {
+            LocationRequest locationRequest = LocationRequest.create();
+            locationRequestTask = viewModel.locationProvider.requestLocationUpdates(locationRequest, viewModel.singleUpdateCallback);
+        } catch (Exception e) {
             // permissions were changed in meantime, provider is no longer working
-            Snackbar.make(findViewById(R.id.activityMain), "Location access permissions are lost! Location service is no longer available", Snackbar.LENGTH_SHORT).show();
-            return;
-        }
-
-        // set reaction, if no task was returned (cached result)
-        if(locationRequestTask == null) {
-            viewModel.setFollowingLocation(true);
-            viewModel.setShowingLocation(true);
+            Snackbar.make(findViewById(R.id.activityMain), "Needed location permissions are not granted! Request for current location failed!", Snackbar.LENGTH_SHORT).show();
             return;
         }
 
@@ -162,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
                 viewModel.setFollowingLocation(true);
                 viewModel.setShowingLocation(true);
             } else
-                Toast.makeText(this, "Request for location failed!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Request for current location failed!", Toast.LENGTH_SHORT).show();
         });
     }
 
@@ -171,40 +166,47 @@ public class MainActivity extends AppCompatActivity {
      */
     private boolean onMyLocationButtonLongClick(View view) {
         // no location permission granted
-        if (!viewModel.hasLocationPermissions(getApplicationContext())) {
+        if (!viewModel.locationProvider.hasPermissions(getApplicationContext())) {
             requestPermissions();
             return true;
         }
 
         // sending request and getting result task
-        final Task<Void> locationRequestTask;
         try {
             // getting values for request from preferences
-            final long intervalSec = Long.parseLong(PreferenceManager
-                    .getDefaultSharedPreferences(getApplicationContext())
-                    .getString(getString(R.string.location_timeout_key), "25"));
-            final long expirationSec = 5 * 60;
-            Log.d(d_TAG, "Preparing manual location updates request: interval: " + intervalSec + " expiration: " + expirationSec);
+            final long intervalSecs = getLocationIntervalSecs();
+            final long expirationSecs = 5 * 60;
+            Log.d(d_TAG, "Preparing manual location updates request: interval: " + intervalSecs + " expiration: " + expirationSecs);
 
-            // sending request
-            locationRequestTask = viewModel.requestLocationUpdates(viewModel.manualLocationUpdateRequest
-                    .setInterval(intervalSec * 1000L)
-                    .setExpirationDuration(expirationSec * 1000L));
-        } catch (IllegalStateException e) {
+            ILocationProvider locationProvider = viewModel.locationProvider;
+            final Task<Void> requestTask = locationProvider.removeLocationUpdates(viewModel.manualUpdatesCallback)
+                    .continueWithTask(task -> {
+                        if(!task.isSuccessful())
+                            Log.d(d_TAG, "Removal of pending manual updates failed!");
+                        LocationRequest locationRequest = LocationRequest.create();
+                        return locationProvider.requestLocationUpdates(locationRequest, viewModel.manualUpdatesCallback);
+                    });
+
+            // setting reaction, when task is successful
+            requestTask.addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    Snackbar.make(findViewById(R.id.activityMain), "Location tracking for 5 mins activated", Snackbar.LENGTH_SHORT).show();
+                    viewModel.setFollowingLocation(true);
+                    viewModel.setShowingLocation(true);
+                } else
+                    Toast.makeText(this, "Request for location updates failed!", Toast.LENGTH_SHORT).show();
+            });
+            return true;
+        } catch (Exception e) {
             Snackbar.make(findViewById(R.id.activityMain), "Location access permissions are lost! Location service is no longer available", Snackbar.LENGTH_SHORT).show();
             return true;
         }
+    }
 
-        // setting reaction, when task is successful
-        locationRequestTask.addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                Snackbar.make(findViewById(R.id.activityMain), "Location tracking for 5 mins activated", Snackbar.LENGTH_SHORT).show();
-                viewModel.setFollowingLocation(true);
-                viewModel.setShowingLocation(true);
-            } else
-                Toast.makeText(this, "Request for location updates failed!", Toast.LENGTH_SHORT).show();
-        });
-        return true;
+    private long getLocationIntervalSecs() {
+        return Long.parseLong(PreferenceManager
+                .getDefaultSharedPreferences(getApplicationContext())
+                .getString(getString(R.string.location_timeout_key), "25"));
     }
 
     private void requestPermissions() {
@@ -213,5 +215,4 @@ public class MainActivity extends AppCompatActivity {
                 1);
         Toast.makeText(this, "Permission for location not granted!", Toast.LENGTH_SHORT).show();
     }
-
 }

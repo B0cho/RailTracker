@@ -1,10 +1,8 @@
 package com.b0cho.railtracker;
 
 import android.app.Application;
-import android.content.Context;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
@@ -12,9 +10,6 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
 
 import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.tasks.Task;
 
 import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.tileprovider.tilesource.ITileSource;
@@ -34,12 +29,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 
 @HiltViewModel
 public class MainActivityViewModel extends AndroidViewModel {
-    private final ILocationProvider locationProvider;
-
-    private final LocationCallback singleLocationRequestCallback;
-    private LocationCallback manualLocationUpdatesCallback;
-
-    public final LocationRequest manualLocationUpdateRequest;
+    public final ILocationProvider locationProvider;
+    public final LocationCallback manualUpdatesCallback;
+    public final LocationCallback singleUpdateCallback;
 
     private final HashMap<Integer, ITileSource> keyedTileSources = new HashMap<>();
     private final HashMap<Integer, Pair<String, Overlay>> keyedOverlays = new HashMap<>();
@@ -80,17 +72,9 @@ public class MainActivityViewModel extends AndroidViewModel {
         }
         updateOverlaysSelection(0, true);
 
-        singleLocationRequestCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
-                lastPosition.setValue(new GeoPoint(locationResult.getLastLocation()));
-            }
-        };
-
         // setting callaback for location update (to differentiate calls)
-        manualLocationUpdatesCallback = null;
-
-        manualLocationUpdateRequest = LocationRequest.create();
+        manualUpdatesCallback = locationProvider.getUpdateConsumersCallback();
+        singleUpdateCallback = locationProvider.getUpdateConsumersCallback();
     }
 
     /**
@@ -115,42 +99,6 @@ public class MainActivityViewModel extends AndroidViewModel {
     @NonNull
     public LiveData<ITileSource> getSelectedTileSource() {
         return Transformations.map(selectedTileSourcePair, source -> source.second);
-    }
-
-    /**
-     * Requests frequent location updates, that are delivered to consumers (LiveData, mapview)
-     * @param locationRequest - Location request to be executed.
-     * @return Task, that is run to obtain location updates.
-     * @throws IllegalStateException if, necessary permission is not granted
-     */
-    @NonNull
-    public final Task<Void> requestLocationUpdates(LocationRequest locationRequest) throws IllegalStateException {
-        manualLocationUpdatesCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
-                lastPosition.setValue(new GeoPoint(locationResult.getLastLocation()));
-            }
-        };
-        return locationProvider.requestLocationUpdates(manualLocationUpdatesCallback, locationRequest);
-    }
-
-    /**
-     * Reqeusts single location update, that is sent to locationCallback. If last location is not outdated, last cached location is returned.
-     * @throws IllegalStateException thrown when necessary permissions are not granted.
-     * @return A Task, if cached location is not available/valid and will be obtained. Null, if there is valid cached location that is sent to locationCallback.
-     */
-    @Nullable
-    public final Task<Void> requestSingleLocationUpdate() throws IllegalStateException {
-        return locationProvider.requestSingleLocationUpdate(singleLocationRequestCallback);
-    }
-
-    /**
-     * Checks if applicatiion (context) was granted with necessary permissions for Location Provider to work.
-     * @param context Context of app
-     * @return True, if app (context) has all necessary permissions. Otherwise false.
-     */
-    public Boolean hasLocationPermissions(Context context) {
-        return locationProvider.checkPermissions(context);
     }
 
     /**
@@ -197,7 +145,7 @@ public class MainActivityViewModel extends AndroidViewModel {
      * @return IMyLocationProvider, that can be used to feed MapView
      */
     public IMyLocationProvider getMyLocationProvider() {
-        return locationProvider;
+        return (IMyLocationProvider) locationProvider;
     }
 
     /**

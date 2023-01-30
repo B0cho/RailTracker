@@ -71,15 +71,6 @@ public class SettingsActivity extends AppCompatActivity {
                 clearUserdataDialogBuilder.create().show();
                 return true;
             });
-
-            // Location timeout expiration
-            Preference locationTimeoutPreference = Objects.requireNonNull(getPreferenceScreen().findPreference(getString(R.string.location_timeout_key)));
-            locationTimeoutPreference.setOnPreferenceChangeListener((preference, newValue) -> {
-                final long longValue = Long.parseLong(newValue.toString());
-                assert longValue > 0;
-                appLocationProvider.setLocationTimeoutSec(longValue);
-                return true;
-            });
         }
 
         @Override
@@ -88,7 +79,7 @@ public class SettingsActivity extends AppCompatActivity {
 
             // disable location settings category if location permission is not granted
             PreferenceCategory locationGPSCat = Objects.requireNonNull(getPreferenceScreen().findPreference(getString(R.string.location_cat_key)));
-            locationGPSCat.setEnabled(appLocationProvider.checkPermissions(requireContext().getApplicationContext()));
+            locationGPSCat.setEnabled(appLocationProvider.hasPermissions(requireContext().getApplicationContext()));
         }
     }
 }
