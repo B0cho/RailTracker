@@ -7,7 +7,6 @@ import org.osmdroid.tileprovider.MapTileProviderBase;
 import org.osmdroid.tileprovider.MapTileProviderBasic;
 import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.views.overlay.Overlay;
-import org.osmdroid.views.overlay.TilesOverlay;
 
 import dagger.Module;
 import dagger.Provides;
@@ -38,9 +37,10 @@ public class OSM_OverlaysModule {
                 new String[]{
                         "https://a.tiles.openrailwaymap.org/standard/",
                         "https://b.tiles.openrailwaymap.org/standard/",
-                        "https://c.tiles.openrailwaymap.org/standard/"}));
-        final TilesOverlay tilesOverlay = new TilesOverlay(tileProvider, context);
-        tilesOverlay.setLoadingBackgroundColor(Color.TRANSPARENT);
-        return tilesOverlay;
+                        "https://c.tiles.openrailwaymap.org/standard/"},
+                "OpenStreetMap contributors"));
+        final LicensedTilesOverlay licensedOverlay = new LicensedTilesOverlay(tileProvider, context);
+        licensedOverlay.setLoadingBackgroundColor(Color.TRANSPARENT);
+        return licensedOverlay;
     }
 }
