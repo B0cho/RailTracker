@@ -1,6 +1,7 @@
 package com.b0cho.railtracker;
 
 import org.osmdroid.tileprovider.tilesource.ITileSource;
+import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.tileprovider.tilesource.XYTileSource;
 
@@ -18,7 +19,16 @@ final class OSM_TileSourcesModule {
     @IntoMap
     @StringKey("MAPNIK")
     public static ITileSource provideMapnik() {
-        return TileSourceFactory.DEFAULT_TILE_SOURCE;
+        // MAPNIK with edited copyright notice
+        final OnlineTileSourceBase mapnik = TileSourceFactory.DEFAULT_TILE_SOURCE;
+        return new XYTileSource(
+                mapnik.name(),
+                mapnik.getMinimumZoomLevel(),
+                mapnik.getMaximumZoomLevel(),
+                mapnik.getTileSizePixels(),
+                mapnik.imageFilenameEnding(),
+                new String[] {mapnik.getBaseUrl()},
+                "Mapnik: " + mapnik.getCopyrightNotice());
     }
 
     @Provides
@@ -31,6 +41,7 @@ final class OSM_TileSourcesModule {
                 20,
                 256,
                 ".png",
-                new String[] {"https://tile.memomaps.de/tilegen/"});
+                new String[] {"https://tile.memomaps.de/tilegen/"},
+                "Öpnvkarte: © memomaps.de, OpenStreetMap contributors");
     }
 }
