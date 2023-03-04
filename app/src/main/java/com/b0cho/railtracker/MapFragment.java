@@ -2,7 +2,6 @@ package com.b0cho.railtracker;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Canvas;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -11,7 +10,6 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -25,7 +23,12 @@ import org.osmdroid.views.overlay.CopyrightOverlay;
 import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -38,10 +41,12 @@ import dagger.hilt.android.AndroidEntryPoint;
 public class MapFragment extends Fragment {
     private MainActivityViewModel viewModel;
     private MapView mapView;
-    private MyLocationNewOverlay locationOverlay;
-    private CopyrightOverlay mapCopyright;
-    private OverlayCopyrightOverlay overlayCopyright;
     private Observer<IGeoPoint> locationObserver;
+    private MyLocationNewOverlay locationOverlay;
+    @Inject
+    public CopyrightOverlay mapCopyright;
+    @Inject
+    public OverlayCopyrightOverlay overlayCopyright;
 
     public MapFragment() {
         // Required empty public constructor
@@ -60,16 +65,6 @@ public class MapFragment extends Fragment {
         mapView.setDestroyMode(false); // used to avoid mWriter getting null after view re-creation
 
         locationOverlay = new MyLocationNewOverlay(mapView);
-
-        // setting copyright overlays
-        final int copyrightColor = ContextCompat.getColor(context, R.color.copyrightText);
-        mapCopyright = new CopyrightOverlay(context);
-        mapCopyright.setOffset(10, 10);
-        mapCopyright.setTextColor(copyrightColor);
-
-        overlayCopyright = new OverlayCopyrightOverlay(context);
-        overlayCopyright.setOffset(10, 50);
-        overlayCopyright.setTextColor(copyrightColor);
 
         return view;
     }
@@ -165,30 +160,6 @@ public class MapFragment extends Fragment {
         // saving state on detach
         viewModel.setZoom(mapView.getZoomLevelDouble());
         viewModel.setCenterPoint(mapView.getMapCenter());
-    }
-
-    /**
-     * Extends CopyrightOverlay to handle LicensedOverlays
-     */
-    private static class OverlayCopyrightOverlay extends CopyrightOverlay {
-        public OverlayCopyrightOverlay(Context context) {
-            super(context);
-        }
-
-        @Override
-        public void draw(Canvas canvas, MapView map, boolean shadow) {
-            StringBuilder copyrightNotice = new StringBuilder();
-            for (Overlay overlay:
-            map.getOverlays()){
-                if(overlay instanceof LicensedTilesOverlay){
-                    if(copyrightNotice.length() != 0)
-                        copyrightNotice.append(", ");
-                    copyrightNotice.append(((LicensedTilesOverlay) overlay).getCopyrightNotice());
-                }
-            }
-            setCopyrightNotice(copyrightNotice.toString());
-            draw(canvas, map.getProjection());
-        }
     }
 }
 
