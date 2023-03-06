@@ -16,11 +16,6 @@ import dagger.hilt.android.qualifiers.ActivityContext;
 @InstallIn(FragmentComponent.class)
 public class MapViewModule {
     @Provides
-    public PinLocationsOverlay providePinLocationsOverlay(@ActivityContext Context activityContext) {
-        return new PinLocationsOverlay(activityContext, "My locations", null);
-    }
-
-    @Provides
     public CopyrightOverlay provideCopyrightOverlay(@ActivityContext Context activityContext) {
         final int copyrightColor = ContextCompat.getColor(activityContext, R.color.copyrightText);
         CopyrightOverlay copyrightOverlay = new CopyrightOverlay(activityContext);

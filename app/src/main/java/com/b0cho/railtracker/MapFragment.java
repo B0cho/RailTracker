@@ -20,12 +20,12 @@ import org.osmdroid.config.Configuration;
 import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.CopyrightOverlay;
+import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -48,6 +48,11 @@ public class MapFragment extends Fragment {
     @Inject
     public OverlayCopyrightOverlay overlayCopyright;
 
+    private boolean showMyLocationMarkers;
+    private ArrayList<Overlay> selectedOverlays;
+    private boolean showMyCurrentLocation;
+    private List<Marker> myLocationsMarkers;
+
     public MapFragment() {
         // Required empty public constructor
     }
@@ -65,6 +70,7 @@ public class MapFragment extends Fragment {
         mapView.setDestroyMode(false); // used to avoid mWriter getting null after view re-creation
 
         locationOverlay = new MyLocationNewOverlay(mapView);
+        myLocationsMarkers = new ArrayList<>();
 
         return view;
     }
@@ -101,23 +107,21 @@ public class MapFragment extends Fragment {
         });
 
         // overlays selection
-        viewModel.getSelectedOverlays().observe(requireActivity(), selectedOverlays -> {
-            mapView.getOverlays().clear();
-            for (Overlay selection :
-                    selectedOverlays) {
-                mapView.getOverlays().add(selection);
-            }
-            showLocationOverlay(Objects.requireNonNull(viewModel.isLocationShown().getValue()));
-            // adding copyright overlays
-            mapView.getOverlays().add(mapCopyright);
-            mapView.getOverlays().add(overlayCopyright);
-            mapView.invalidate();
+        viewModel.getSelectedOverlays().observe(requireActivity(), newSelectedOverlays -> {
+            selectedOverlays = newSelectedOverlays;
+            reloadOverlays();
         });
 
-        // showing location
+        // showing current location
         viewModel.isLocationShown().observe(requireActivity(), show -> {
-            showLocationOverlay(show);
-            mapView.invalidate();
+            showMyCurrentLocation = show;
+            reloadOverlays();
+        });
+
+        // showing 'My locations' overlay
+        viewModel.isMyLocationsOverlayShown().observe(requireActivity(), show -> {
+            showMyLocationMarkers = show;
+            reloadOverlays();
         });
 
         // initial setting of center position and zoom
@@ -139,13 +143,37 @@ public class MapFragment extends Fragment {
                 viewModel.getLastPosition().removeObserver(locationObserver);
             }
         });
+
+        // 'My locations' data
+        viewModel.myLocationsList().observe(requireActivity(), pinLocationEntities -> {
+            // TODO: IMPROVE LIVE DATA NOT UPDATE WHOLE LIST, BUT ONLY ADD/REMOVE/ - rxJava?
+            myLocationsMarkers.clear();
+            myLocationsMarkers.addAll(pinLocationEntities.stream().map(pinLocationEntity -> {
+                final Marker marker = new Marker(mapView);
+                marker.setPosition(pinLocationEntity.getGeoPoint());
+                marker.setTitle(pinLocationEntity.getName());
+                marker.setSubDescription(pinLocationEntity.getTimestamp().toString());
+                return marker;
+            }).collect(Collectors.toList()));
+        });
     }
 
-    private void showLocationOverlay(Boolean show) {
-        if(show)
+    private void reloadOverlays() {
+        mapView.getOverlays().clear();
+
+        // adding selected overlays
+        mapView.getOverlays().addAll(selectedOverlays);
+
+        // adding overlays with locations
+        if(showMyLocationMarkers)
+            mapView.getOverlays().addAll(myLocationsMarkers);
+        if(showMyCurrentLocation)
             mapView.getOverlays().add(locationOverlay);
-        else
-            mapView.getOverlays().remove(locationOverlay);
+
+        // adding copyright overlays
+        mapView.getOverlays().add(mapCopyright);
+        mapView.getOverlays().add(overlayCopyright);
+        mapView.invalidate();
     }
 
     @Override

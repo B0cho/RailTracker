@@ -36,6 +36,14 @@
                 android:checkableBehavior="all">
                 <!-- OVERLAY SOURCES MENU ITEMS ADDED DYNAMICALLY -->
             </group>
+            <group
+                android:id="@+id/otherOverlaysGroup"
+                android:checkableBehavior="all">
+                <!-- 'My locations' overlay menu item -->
+                <item
+                    android:id="@+id/myLocationsOverlayCheck"
+                    android:title="@string/myLocationsMenuItem"/>
+            </group>
         </menu>
     </item>
 

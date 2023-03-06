@@ -99,11 +99,14 @@ public class MainActivity extends AppCompatActivity {
             menuitem.setChecked(!menuitem.isChecked());
         });
 
-        viewModel.getSelectedOverlaysIds().observe(this, keys -> {
-            for(int id = 0; id < overlaysMenu.size(); id++) {
-                overlaysMenu.findItem(id).setChecked(keys.contains(id));
+        viewModel.getSelectedOverlaysIds().observe(this, selectedKeys -> {
+            for (int overlayKey :
+                    viewModel.getOverlaysKeys()) {
+                overlaysMenu.findItem(overlayKey).setChecked(selectedKeys.contains(overlayKey));
             }
         });
+
+        viewModel.isMyLocationsOverlayShown().observe(this, isShown -> overlaysMenu.findItem(R.id.myLocationsOverlayCheck).setChecked(isShown));
 
         return true;
     }
@@ -121,6 +124,10 @@ public class MainActivity extends AppCompatActivity {
         // overlays
         if (groupId == R.id.overlaySourceGroup && viewModel.offeredOverlaysMenuInput().containsKey(itemId)) {
             viewModel.updateOverlaysSelection(itemId, !item.isChecked());
+            return true;
+        }
+        if(groupId == R.id.otherOverlaysGroup && itemId == R.id.myLocationsOverlayCheck) {
+            viewModel.setShowMyLocationsOverlay(!item.isChecked());
             return true;
         }
 
@@ -155,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
         locationRequestTask.addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 viewModel.setFollowingLocation(true);
-                viewModel.setShowingLocation(true);
+                viewModel.setShowingCurrentLocation(true);
             } else
                 Toast.makeText(this, "Request for current location failed!", Toast.LENGTH_SHORT).show();
         });
@@ -192,7 +199,7 @@ public class MainActivity extends AppCompatActivity {
                 if (task.isSuccessful()) {
                     Snackbar.make(findViewById(R.id.activityMain), "Location tracking for 5 mins activated", Snackbar.LENGTH_SHORT).show();
                     viewModel.setFollowingLocation(true);
-                    viewModel.setShowingLocation(true);
+                    viewModel.setShowingCurrentLocation(true);
                 } else
                     Toast.makeText(this, "Request for location updates failed!", Toast.LENGTH_SHORT).show();
             });

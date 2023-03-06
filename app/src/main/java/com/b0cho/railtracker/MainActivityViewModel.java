@@ -42,7 +42,9 @@ public class MainActivityViewModel extends AndroidViewModel {
     private final MutableLiveData<IGeoPoint> centerPoint = new MutableLiveData<>(new GeoPoint(52.0, 19.5));
     private final MutableLiveData<Double> zoom = new MutableLiveData<>(7.0);
     private final MutableLiveData<Boolean> followingLocation = new MutableLiveData<>(false);
-    private final MutableLiveData<Boolean> showingLocation = new MutableLiveData<>(false);
+
+    private final MutableLiveData<Boolean> showingCurrentLocation = new MutableLiveData<>(false);
+    private final MutableLiveData<Boolean> showMyLocationsOverlay = new MutableLiveData<>(false);
 
     @Inject
     public MainActivityViewModel(
@@ -210,19 +212,58 @@ public class MainActivityViewModel extends AndroidViewModel {
      * @return LiveData of flag if location should be shown on e.g. MapView
      */
     @NonNull
-    public MutableLiveData<Boolean> isLocationShown() {
-        return showingLocation;
+    public LiveData<Boolean> isLocationShown() {
+        return showingCurrentLocation;
     }
 
-    public void setShowingLocation(boolean showLocation) {
-        showingLocation.setValue(showLocation);
+    /**
+     * @return LiveData of flag if 'My locations' overlay should be shown
+     */
+    @NonNull
+    public LiveData<Boolean> isMyLocationsOverlayShown() {
+        return showMyLocationsOverlay;
     }
 
+    /**
+     * Sets visibility of current location
+     *
+     * @param showLocation - true, if current locations should be shown
+     */
+    public void setShowingCurrentLocation(boolean showLocation) {
+        showingCurrentLocation.setValue(showLocation);
+    }
+
+    /**
+     * Sets visibility of 'My locations' overlay
+     *
+     * @param showOverlay - true, if overlay with 'My locations' should be shown
+     */
+    public void setShowMyLocationsOverlay(boolean showOverlay) {
+        showMyLocationsOverlay.setValue(showOverlay);
+    }
+
+    /**
+     * Sets zoom of connected map view
+     *
+     * @param zoom - value of zoom to be applied
+     */
     public void setZoom(Double zoom) {
         this.zoom.setValue(zoom);
     }
 
+    /**
+     * Sets center point of connected mapview
+     *
+     * @param center Center point, to that map should be moved
+     */
     public void setCenterPoint(IGeoPoint center) {
         centerPoint.setValue(center);
+    }
+
+    /**
+     * @return Set of keys of available overlays
+     */
+    public Set<Integer> getOverlaysKeys() {
+        return keyedOverlays.keySet();
     }
 }

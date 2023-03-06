@@ -24,5 +24,6 @@
     <string name="location_timeout_title">Location expiration timeout</string>
     <string name="location_timeout_key">location_timeout_key</string>
     <string name="location_cat_key">location_cat_key</string>
+    <string name="myLocationsMenuItem">My locations</string>
 
 </resources>
