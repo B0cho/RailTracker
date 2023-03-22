@@ -11,16 +11,21 @@ import androidx.lifecycle.Transformations;
 
 import com.google.android.gms.location.LocationCallback;
 
+import org.jetbrains.annotations.NotNull;
 import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.tileprovider.tilesource.ITileSource;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.mylocation.IMyLocationProvider;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -43,8 +48,11 @@ public class MainActivityViewModel extends AndroidViewModel {
     private final MutableLiveData<Double> zoom = new MutableLiveData<>(7.0);
     private final MutableLiveData<Boolean> followingLocation = new MutableLiveData<>(false);
 
-    private final MutableLiveData<Boolean> showingCurrentLocation = new MutableLiveData<>(false);
-    private final MutableLiveData<Boolean> showMyLocationsOverlay = new MutableLiveData<>(false);
+    private final MutableLiveData<Boolean> showCurrentLocation = new MutableLiveData<>(false);
+    private final MutableLiveData<Boolean> showMyPinLocations = new MutableLiveData<>(false);
+    private final MutableLiveData<Optional<PinLocationEntity>> selectedPinLocationIWObject = new MutableLiveData<>(Optional.empty());
+
+    private final MutableLiveData<List<PinLocationEntity>> myPinLocationsLiveData = new MutableLiveData<>();
 
     @Inject
     public MainActivityViewModel(
@@ -213,7 +221,7 @@ public class MainActivityViewModel extends AndroidViewModel {
      */
     @NonNull
     public LiveData<Boolean> isLocationShown() {
-        return showingCurrentLocation;
+        return showCurrentLocation;
     }
 
     /**
@@ -221,7 +229,7 @@ public class MainActivityViewModel extends AndroidViewModel {
      */
     @NonNull
     public LiveData<Boolean> isMyLocationsOverlayShown() {
-        return showMyLocationsOverlay;
+        return showMyPinLocations;
     }
 
     /**
@@ -229,8 +237,8 @@ public class MainActivityViewModel extends AndroidViewModel {
      *
      * @param showLocation - true, if current locations should be shown
      */
-    public void setShowingCurrentLocation(boolean showLocation) {
-        showingCurrentLocation.setValue(showLocation);
+    public void setShowCurrentLocation(boolean showLocation) {
+        showCurrentLocation.setValue(showLocation);
     }
 
     /**
@@ -238,8 +246,8 @@ public class MainActivityViewModel extends AndroidViewModel {
      *
      * @param showOverlay - true, if overlay with 'My locations' should be shown
      */
-    public void setShowMyLocationsOverlay(boolean showOverlay) {
-        showMyLocationsOverlay.setValue(showOverlay);
+    public void setShowMyPinLocations(boolean showOverlay) {
+        showMyPinLocations.setValue(showOverlay);
     }
 
     /**
@@ -265,5 +273,27 @@ public class MainActivityViewModel extends AndroidViewModel {
      */
     public Set<Integer> getOverlaysKeys() {
         return keyedOverlays.keySet();
+    }
+
+    /**
+     * @return LiveData of list with loaded 'my locations
+     */
+    public LiveData<List<PinLocationEntity>> myPinLocationsLiveData() {
+        return myPinLocationsLiveData;
+    }
+
+    /**
+     * @return LiveData with currently selected 'My location'
+     */
+    @NotNull
+    public LiveData<Optional<PinLocationEntity>> getSelectedPinLocationIWObject() {
+        return selectedPinLocationIWObject;
+    }
+
+    /**
+     * @param relatedObject to be set as currently selected related Object
+     */
+    public void setSelectedPinLocationIWObject(final PinLocationEntity relatedObject) {
+        selectedPinLocationIWObject.setValue(Optional.ofNullable(relatedObject));
     }
 }

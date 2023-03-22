@@ -22,6 +22,8 @@ import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.CopyrightOverlay;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Overlay;
+import org.osmdroid.views.overlay.OverlayWithIW;
+import org.osmdroid.views.overlay.infowindow.MarkerInfoWindow;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import java.util.ArrayList;
@@ -48,10 +50,11 @@ public class MapFragment extends Fragment {
     @Inject
     public OverlayCopyrightOverlay overlayCopyright;
 
-    private boolean showMyLocationMarkers;
+    private boolean showMyPinLocationMarkers;
     private ArrayList<Overlay> selectedOverlays;
     private boolean showMyCurrentLocation;
-    private List<Marker> myLocationsMarkers;
+    private List<Marker> myPinLocationsMarkers;
+    private MarkerInfoWindow myPinLocationIW;
 
     public MapFragment() {
         // Required empty public constructor
@@ -70,7 +73,20 @@ public class MapFragment extends Fragment {
         mapView.setDestroyMode(false); // used to avoid mWriter getting null after view re-creation
 
         locationOverlay = new MyLocationNewOverlay(mapView);
-        myLocationsMarkers = new ArrayList<>();
+        myPinLocationsMarkers = new ArrayList<>();
+
+        myPinLocationIW = new PinLocationInfoWindow(R.layout.marker_info_window_my_location, mapView, new PinLocationInfoWindow.OnVisibilityChangeListener() {
+            @Override
+            public void onOpen(@Nullable Object item) {
+                if(item instanceof PinLocationEntity)
+                    viewModel.setSelectedPinLocationIWObject((PinLocationEntity) item);
+            }
+
+            @Override
+            public void onClose() {
+                viewModel.setSelectedPinLocationIWObject(null);
+            }
+        }, null, null);
 
         return view;
     }
@@ -112,6 +128,20 @@ public class MapFragment extends Fragment {
             reloadOverlays();
         });
 
+        // 'My locations' data
+        viewModel.myPinLocationsLiveData().observe(requireActivity(), myPinLocationEntities -> {
+            myPinLocationsMarkers.clear();
+            myPinLocationsMarkers.addAll(myPinLocationEntities.stream().map(pinLocationEntity -> {
+                final Marker marker = new Marker(mapView);
+                marker.setPosition(pinLocationEntity.getGeoPoint());
+                marker.setTitle(pinLocationEntity.getName());
+                marker.setInfoWindow(myPinLocationIW);
+                marker.setRelatedObject(pinLocationEntity);
+                return marker;
+            }).collect(Collectors.toList()));
+            reloadOverlays();
+        });
+
         // showing current location
         viewModel.isLocationShown().observe(requireActivity(), show -> {
             showMyCurrentLocation = show;
@@ -120,7 +150,8 @@ public class MapFragment extends Fragment {
 
         // showing 'My locations' overlay
         viewModel.isMyLocationsOverlayShown().observe(requireActivity(), show -> {
-            showMyLocationMarkers = show;
+            showMyPinLocationMarkers = show;
+            myPinLocationsMarkers.forEach(OverlayWithIW::closeInfoWindow);
             reloadOverlays();
         });
 
@@ -143,19 +174,6 @@ public class MapFragment extends Fragment {
                 viewModel.getLastPosition().removeObserver(locationObserver);
             }
         });
-
-        // 'My locations' data
-        viewModel.myLocationsList().observe(requireActivity(), pinLocationEntities -> {
-            // TODO: IMPROVE LIVE DATA NOT UPDATE WHOLE LIST, BUT ONLY ADD/REMOVE/ - rxJava?
-            myLocationsMarkers.clear();
-            myLocationsMarkers.addAll(pinLocationEntities.stream().map(pinLocationEntity -> {
-                final Marker marker = new Marker(mapView);
-                marker.setPosition(pinLocationEntity.getGeoPoint());
-                marker.setTitle(pinLocationEntity.getName());
-                marker.setSubDescription(pinLocationEntity.getTimestamp().toString());
-                return marker;
-            }).collect(Collectors.toList()));
-        });
     }
 
     private void reloadOverlays() {
@@ -165,8 +183,8 @@ public class MapFragment extends Fragment {
         mapView.getOverlays().addAll(selectedOverlays);
 
         // adding overlays with locations
-        if(showMyLocationMarkers)
-            mapView.getOverlays().addAll(myLocationsMarkers);
+        if(showMyPinLocationMarkers)
+            mapView.getOverlays().addAll(myPinLocationsMarkers);
         if(showMyCurrentLocation)
             mapView.getOverlays().add(locationOverlay);
 

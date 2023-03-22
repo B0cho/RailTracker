@@ -127,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
         if(groupId == R.id.otherOverlaysGroup && itemId == R.id.myLocationsOverlayCheck) {
-            viewModel.setShowMyLocationsOverlay(!item.isChecked());
+            viewModel.setShowMyPinLocations(!item.isChecked());
             return true;
         }
 
@@ -162,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
         locationRequestTask.addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 viewModel.setFollowingLocation(true);
-                viewModel.setShowingCurrentLocation(true);
+                viewModel.setShowCurrentLocation(true);
             } else
                 Toast.makeText(this, "Request for current location failed!", Toast.LENGTH_SHORT).show();
         });
@@ -199,7 +199,7 @@ public class MainActivity extends AppCompatActivity {
                 if (task.isSuccessful()) {
                     Snackbar.make(findViewById(R.id.activityMain), "Location tracking for 5 mins activated", Snackbar.LENGTH_SHORT).show();
                     viewModel.setFollowingLocation(true);
-                    viewModel.setShowingCurrentLocation(true);
+                    viewModel.setShowCurrentLocation(true);
                 } else
                     Toast.makeText(this, "Request for location updates failed!", Toast.LENGTH_SHORT).show();
             });
