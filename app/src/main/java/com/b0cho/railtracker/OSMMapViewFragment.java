@@ -40,8 +40,8 @@ import dagger.hilt.android.AndroidEntryPoint;
  * Capable to switch tile sources and overlays
  */
 @AndroidEntryPoint
-public class MapFragment extends Fragment {
-    private MainActivityViewModel viewModel;
+public class OSMMapViewFragment extends Fragment {
+    private OSMMapViewVM osmMapViewVM;
     private MapView mapView;
     private Observer<IGeoPoint> locationObserver;
     private MyLocationNewOverlay locationOverlay;
@@ -56,17 +56,15 @@ public class MapFragment extends Fragment {
     private List<Marker> myPinLocationsMarkers;
     private MarkerInfoWindow myPinLocationIW;
 
-    public MapFragment() {
+    public OSMMapViewFragment() {
         // Required empty public constructor
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.map_fragment, container, false);
+        View view = inflater.inflate(R.layout.fragment_mapview, container, false);
         final Context context = requireContext();
-        // create mapview
         Configuration.getInstance().load(context, PreferenceManager.getDefaultSharedPreferences(context));
 
         mapView = view.findViewById(R.id.mapView);
@@ -79,15 +77,14 @@ public class MapFragment extends Fragment {
             @Override
             public void onOpen(@Nullable Object item) {
                 if(item instanceof PinLocationEntity)
-                    viewModel.setSelectedPinLocationIWObject((PinLocationEntity) item);
+                    osmMapViewVM.setSelectedPinLocationIWObject((PinLocationEntity) item);
             }
 
             @Override
             public void onClose() {
-                viewModel.setSelectedPinLocationIWObject(null);
+                osmMapViewVM.setSelectedPinLocationIWObject(null);
             }
         }, null, null);
-
         return view;
     }
 
@@ -95,18 +92,15 @@ public class MapFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        osmMapViewVM = new ViewModelProvider(requireActivity()).get(OSMMapViewVM.class);
 
-        // getting viewModel
-        viewModel = new ViewModelProvider(requireActivity()).get(MainActivityViewModel.class);
-
-        // setting location provider for viewmap
-        locationOverlay.enableMyLocation(viewModel.getMyLocationProvider());
+        locationOverlay.enableMyLocation(osmMapViewVM.getMyLocationProvider());
 
         // setting listener for moving map -> lose following location
         mapView.setOnTouchListener((view1, motionEvent) -> {
             requireActivity().onTouchEvent(motionEvent);
             if(motionEvent.getAction() == MotionEvent.ACTION_MOVE) {
-                viewModel.setFollowingLocation(false);
+                osmMapViewVM.setFollowingLocation(false);
             }
             return false;
         });
@@ -115,7 +109,7 @@ public class MapFragment extends Fragment {
         SETTING OBSERVERS
          */
         // tile sources selection
-        viewModel.getSelectedTileSource().observe(requireActivity(), selectedTileSource -> {
+        osmMapViewVM.getSelectedTileSource().observe(requireActivity(), selectedTileSource -> {
             if (selectedTileSource != null) {
                 mapView.setTileSource(selectedTileSource);
             }
@@ -123,13 +117,13 @@ public class MapFragment extends Fragment {
         });
 
         // overlays selection
-        viewModel.getSelectedOverlays().observe(requireActivity(), newSelectedOverlays -> {
+        osmMapViewVM.getSelectedOverlays().observe(requireActivity(), newSelectedOverlays -> {
             selectedOverlays = newSelectedOverlays;
             reloadOverlays();
         });
 
         // 'My locations' data
-        viewModel.myPinLocationsLiveData().observe(requireActivity(), myPinLocationEntities -> {
+        osmMapViewVM.myPinLocationsLiveData().observe(requireActivity(), myPinLocationEntities -> {
             myPinLocationsMarkers.clear();
             myPinLocationsMarkers.addAll(myPinLocationEntities.stream().map(pinLocationEntity -> {
                 final Marker marker = new Marker(mapView);
@@ -143,21 +137,21 @@ public class MapFragment extends Fragment {
         });
 
         // showing current location
-        viewModel.isLocationShown().observe(requireActivity(), show -> {
+        osmMapViewVM.isLocationShown().observe(requireActivity(), show -> {
             showMyCurrentLocation = show;
             reloadOverlays();
         });
 
         // showing 'My locations' overlay
-        viewModel.isMyLocationsOverlayShown().observe(requireActivity(), show -> {
+        osmMapViewVM.isMyLocationsOverlayShown().observe(requireActivity(), show -> {
             showMyPinLocationMarkers = show;
             myPinLocationsMarkers.forEach(OverlayWithIW::closeInfoWindow);
             reloadOverlays();
         });
 
         // initial setting of center position and zoom
-        viewModel.getCenterPoint().observe(requireActivity(), geoPoint -> mapView.getController().setCenter(geoPoint));
-        viewModel.getZoom().observe(requireActivity(), zoom -> mapView.getController().setZoom(zoom));
+        osmMapViewVM.getCenterPoint().observe(requireActivity(), geoPoint -> mapView.getController().setCenter(geoPoint));
+        osmMapViewVM.getZoom().observe(requireActivity(), zoom -> mapView.getController().setZoom(zoom));
 
         // setting mapview control
         mapView.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.NEVER);
@@ -165,21 +159,19 @@ public class MapFragment extends Fragment {
 
         // following location
         locationObserver = location -> mapView.getController().animateTo(location);
-        viewModel.isLocationFollowed().observe(requireActivity(), follow -> {
+        osmMapViewVM.isLocationFollowed().observe(requireActivity(), follow -> {
             if(follow) {
                 locationOverlay.enableFollowLocation();
-                viewModel.getLastPosition().observe(requireActivity(), locationObserver);
+                osmMapViewVM.getLastPosition().observe(requireActivity(), locationObserver);
             } else {
                 locationOverlay.disableFollowLocation();
-                viewModel.getLastPosition().removeObserver(locationObserver);
+                osmMapViewVM.getLastPosition().removeObserver(locationObserver);
             }
         });
     }
 
     private void reloadOverlays() {
         mapView.getOverlays().clear();
-
-        // adding selected overlays
         mapView.getOverlays().addAll(selectedOverlays);
 
         // adding overlays with locations
@@ -204,8 +196,8 @@ public class MapFragment extends Fragment {
         super.onDetach();
 
         // saving state on detach
-        viewModel.setZoom(mapView.getZoomLevelDouble());
-        viewModel.setCenterPoint(mapView.getMapCenter());
+        osmMapViewVM.setZoom(mapView.getZoomLevelDouble());
+        osmMapViewVM.setCenterPoint(mapView.getMapCenter());
     }
 }
 

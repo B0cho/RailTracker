@@ -8,23 +8,30 @@ import org.osmdroid.tileprovider.MapTileProviderBasic;
 import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.views.overlay.Overlay;
 
+import javax.inject.Singleton;
+
 import dagger.Module;
 import dagger.Provides;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.components.ViewModelComponent;
 import dagger.hilt.android.qualifiers.ApplicationContext;
+import dagger.hilt.android.scopes.FragmentScoped;
+import dagger.hilt.android.scopes.ViewModelScoped;
+import dagger.hilt.components.SingletonComponent;
 import dagger.multibindings.IntoMap;
 import dagger.multibindings.StringKey;
 
 @Module
-@InstallIn(ViewModelComponent.class)
+@InstallIn(SingletonComponent.class)
 public class OSM_OverlaysModule {
     @Provides
+    @Singleton
     public MapTileProviderBase provideMapTileProviderBasic(@ApplicationContext Context context) {
         return new MapTileProviderBasic(context);
     }
 
     @Provides
+    @Singleton
     @IntoMap
     @StringKey("OpenRailwayMap")
     public Overlay provideORM_TilesOverlay (@ApplicationContext Context context, MapTileProviderBase tileProvider) {
