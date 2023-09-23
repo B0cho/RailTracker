@@ -35,8 +35,8 @@ public class OSMMapViewVM extends AndroidViewModel {
     public final LocationCallback singleUpdateCallback;
     public final LocationCallback manualUpdatesCallback;
 
-    private final HashMap<Integer, ITileSource> keyedTileSources;
-    private final HashMap<Integer, Pair<String, Overlay>> keyedOverlays;
+    private final HashMap<Integer, ITileSource> tileSourcesMap;
+    private final HashMap<Integer, Pair<String, Overlay>> overlaysMap;
 
     private final MutableLiveData<HashMap<Integer, Pair<String, Overlay>>> selectedOverlaysHashMap;
     private final MutableLiveData<Pair<Integer, ITileSource>> selectedTileSourcePair;
@@ -61,8 +61,8 @@ public class OSMMapViewVM extends AndroidViewModel {
         super(application);
 
         // init
-        keyedTileSources = new HashMap<>();
-        keyedOverlays = new HashMap<>();
+        tileSourcesMap = new HashMap<>();
+        overlaysMap = new HashMap<>();
         selectedOverlaysHashMap = new MutableLiveData<>();
         selectedTileSourcePair = new MutableLiveData<>();
         selectedPinLocationIWObject = new MutableLiveData<>(Optional.empty());
@@ -80,7 +80,7 @@ public class OSMMapViewVM extends AndroidViewModel {
         int key = 0;
         for (Map.Entry<String, ITileSource> entry :
                 tileSources.entrySet()) {
-            keyedTileSources.put(key, entry.getValue());
+            tileSourcesMap.put(key, entry.getValue());
             key++;
         }
         setTileSourceSelection(0);
@@ -90,7 +90,7 @@ public class OSMMapViewVM extends AndroidViewModel {
         key = 0;
         for (Map.Entry<String, Overlay> entry :
                 overlaysSources.entrySet()) {
-            keyedOverlays.put(key, new Pair<>(entry.getKey(), entry.getValue()));
+            overlaysMap.put(key, new Pair<>(entry.getKey(), entry.getValue()));
             key++;
         }
         updateOverlaysSelection(0, true);
@@ -106,7 +106,7 @@ public class OSMMapViewVM extends AndroidViewModel {
     @NonNull
     public HashMap<Integer, String> offeredSourcesMenuInput() {
         HashMap<Integer, String> hashMap = new HashMap<>();
-        keyedTileSources.forEach((key, source) -> hashMap.put(key, source.name()));
+        tileSourcesMap.forEach((key, source) -> hashMap.put(key, source.name()));
         return hashMap;
     }
 
@@ -116,7 +116,7 @@ public class OSMMapViewVM extends AndroidViewModel {
     @NonNull
     public HashMap<Integer, String> offeredOverlaysMenuInput() {
         HashMap<Integer, String> hashMap = new HashMap<>();
-        keyedOverlays.forEach((key, overlayPair) -> hashMap.put(key, overlayPair.first));
+        overlaysMap.forEach((key, overlayPair) -> hashMap.put(key, overlayPair.first));
         return hashMap;
     }
 
@@ -124,7 +124,7 @@ public class OSMMapViewVM extends AndroidViewModel {
      * @return Set of keys of available overlays
      */
     public Set<Integer> getOverlaysKeys() {
-        return keyedOverlays.keySet();
+        return overlaysMap.keySet();
     }
 
     /**
@@ -143,7 +143,7 @@ public class OSMMapViewVM extends AndroidViewModel {
     public void updateOverlaysSelection(int itemId, boolean checked) {
         HashMap<Integer, Pair<String, Overlay>> currentSelection = Objects.requireNonNull(selectedOverlaysHashMap.getValue());
         if(checked)
-            currentSelection.put(itemId, keyedOverlays.get(itemId));
+            currentSelection.put(itemId, overlaysMap.get(itemId));
         else
             currentSelection.remove(itemId);
         selectedOverlaysHashMap.setValue(currentSelection);
@@ -201,7 +201,7 @@ public class OSMMapViewVM extends AndroidViewModel {
      * @param itemId ID of menuItem, that was selected from sources menu
      */
     public void setTileSourceSelection(int itemId) {
-        selectedTileSourcePair.setValue(new Pair<>(itemId, keyedTileSources.get(itemId)));
+        selectedTileSourcePair.setValue(new Pair<>(itemId, tileSourcesMap.get(itemId)));
     }
 
     /**

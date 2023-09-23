@@ -1,7 +1,9 @@
 package com.b0cho.railtracker;
 
 import android.Manifest;
+import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -17,20 +19,76 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 
-import org.osmdroid.views.MapView;
+import org.osmdroid.util.GeoPoint;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Set;
 
 public class OSMMapViewActivity extends AppCompatActivity {
     protected OSMMapViewVM osmMapViewVM;
     protected Menu sourcesMenu;
     protected Menu overlaysMenu;
 
+    // KEYS FOR INTENT EXTRAS
+    public static final String MAPVIEW_CENTER = "MAPVIEW_CENTER";
+    public static final String MAPVIEW_ZOOM = "MAPVIEW_ZOOM";
+    public static final String SHOW_MY_LOCATION = "MAPVIEW_MY_LOCATION";
+    public static final String SELECTED_TILE_SOURCE = "SELECTED_TILE_SOURCE";
+    public static final String SELECTED_OVERLAYS = "SELECTED_OVERLAYS";
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         osmMapViewVM = new ViewModelProvider(this).get(OSMMapViewVM.class);
+
+        // activity initial setting
+        if(savedInstanceState == null) {
+            final Intent intent = getIntent();
+            if(intent != null) {
+                final GeoPoint intentGeoPoint = intent.getParcelableExtra(MAPVIEW_CENTER);
+                if(intentGeoPoint != null)
+                    osmMapViewVM.setCenterPoint(intentGeoPoint);
+
+                if(intent.hasExtra(MAPVIEW_ZOOM)) {
+                    final double intentZoom = intent.getDoubleExtra(MAPVIEW_ZOOM, -1.0);
+                    if (intentZoom > 0)
+                        osmMapViewVM.setZoom(intentZoom);
+                    else
+                        Log.e(this + "onCreate: ", "Invalid intent extra " + MAPVIEW_ZOOM + " = " + intentZoom + " - ignored.");
+                }
+
+                if(intent.hasExtra(SHOW_MY_LOCATION)) {
+                    osmMapViewVM.setShowCurrentLocation(intent.getBooleanExtra(SHOW_MY_LOCATION, false));
+                }
+
+                if(intent.hasExtra(SELECTED_TILE_SOURCE)) {
+                    final int intentSelectedTileSource = intent.getIntExtra(SELECTED_TILE_SOURCE, -1);
+                    if(osmMapViewVM.offeredSourcesMenuInput().containsKey(intentSelectedTileSource))
+                        osmMapViewVM.setTileSourceSelection(intentSelectedTileSource);
+                    else
+                        Log.e(this + "onCreate: ", "Invalid intent extra " + SELECTED_TILE_SOURCE + " = " + intentSelectedTileSource + " - ignored.");
+                }
+
+                if(intent.hasExtra(SELECTED_OVERLAYS)) {
+                    final ArrayList<Integer> intentSelectedOverlays = intent.getIntegerArrayListExtra(SELECTED_OVERLAYS);
+                    if(intentSelectedOverlays != null) {
+                        osmMapViewVM.getOverlaysKeys().forEach(key -> osmMapViewVM.updateOverlaysSelection(key, false));
+                        intentSelectedOverlays.forEach(key -> {
+                            if(osmMapViewVM.getOverlaysKeys().contains(key)) {
+                                osmMapViewVM.updateOverlaysSelection(key, true);
+                            }
+                            else
+                                Log.e(this + "onCreate: ", "Invalid intent extra " + SELECTED_OVERLAYS + " key = " + key + " - ignored.");
+                        });
+                    }
+                    else
+                        Log.e(this + "onCreate: ", "Invalid intent extra " + SELECTED_OVERLAYS + " = null - ignored.");
+                }
+            }
+        }
     }
 
     @Override

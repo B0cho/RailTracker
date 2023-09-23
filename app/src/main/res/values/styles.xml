@@ -6,6 +6,29 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:textColorSecondary">#FFFFFF</item>
+    </style>
+
+    <style name="PositionPicker">
+        <item name="android:textColor">#FFFFFF</item>
+    </style>
+
+    <style name="PositionPicker.Button_Confirm">
+        <item name="backgroundTint">#6BC547</item>
+        <item name="android:textColor">#CEFFFFFF</item>
+    </style>
+
+    <style name="PositionPicker.Button_Cancel">
+        <item name="backgroundTint">#B71C1C</item>
+        <item name="android:textColor">#CEFFFFFF</item>
+    </style>
+
+    <style name="PositionPicker.Layout">
+        <item name="android:background">@color/colorPrimary</item>
+    </style>
+
+    <style name="PositionPicker.Hint">
+        <item name="android:textSize">18sp</item>
     </style>
 
 </resources>

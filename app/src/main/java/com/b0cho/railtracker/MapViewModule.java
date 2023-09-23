@@ -9,11 +9,11 @@ import org.osmdroid.views.overlay.CopyrightOverlay;
 import dagger.Module;
 import dagger.Provides;
 import dagger.hilt.InstallIn;
-import dagger.hilt.android.components.FragmentComponent;
+import dagger.hilt.android.components.ActivityComponent;
 import dagger.hilt.android.qualifiers.ActivityContext;
 
 @Module
-@InstallIn(FragmentComponent.class)
+@InstallIn(ActivityComponent.class)
 public class MapViewModule {
     @Provides
     public CopyrightOverlay provideCopyrightOverlay(@ActivityContext Context activityContext) {

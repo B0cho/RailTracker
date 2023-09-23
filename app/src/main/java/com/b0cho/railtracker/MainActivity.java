@@ -2,6 +2,7 @@ package com.b0cho.railtracker;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -15,6 +16,11 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
+import org.osmdroid.api.IGeoPoint;
+
+import java.util.ArrayList;
+import java.util.Set;
+
 import dagger.hilt.android.AndroidEntryPoint;
 
 // MAIN ACTIVITY
@@ -22,7 +28,13 @@ import dagger.hilt.android.AndroidEntryPoint;
 public class MainActivity extends OSMMapViewActivity {
     private MainActivityViewModel mainActivityViewModel;
     private FloatingActionButton myLocationButton;
-    private final static String d_TAG = "MainActivity: ";
+    private FloatingActionButton addMyLocationButton;
+    private IGeoPoint mapviewCenterPoint;
+    private Double mapviewZoom;
+    private Boolean mapviewShowCurLocation;
+    private Integer selectedTileSourceKey;
+    private Set<Integer> selectedOverlaysKeys;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -36,6 +48,7 @@ public class MainActivity extends OSMMapViewActivity {
 
         // setting listeners and callbacks
         myLocationButton = findViewById(R.id.myLocationActionButton);
+        addMyLocationButton = findViewById(R.id.addMyLocationActionButton);
 
         osmMapViewVM.isLocationFollowed().observe(this, follow -> {
             if(follow) {
@@ -55,10 +68,29 @@ public class MainActivity extends OSMMapViewActivity {
 
         // add my location button
         addMyLocationButton.setOnClickListener(this::onAddMyLocationButtonClick);
+
+        // observing values from viewmodel
+        osmMapViewVM.getCenterPoint().observe(this, centerPoint -> mapviewCenterPoint = centerPoint);
+        osmMapViewVM.getZoom().observe(this, zoom -> mapviewZoom = zoom);
+        osmMapViewVM.isLocationShown().observe(this, isShown -> mapviewShowCurLocation = isShown);
+        osmMapViewVM.getSelectedTileSourceId().observe(this, selectedId -> selectedTileSourceKey = selectedId);
+        osmMapViewVM.getSelectedOverlaysIds().observe(this, selection -> selectedOverlaysKeys = selection);
+
     }
 
     private void onMyLocationButtonClick(View view) {
         moveToCurrentLocation();
+    }
+
+    private void onAddMyLocationButtonClick(View view) {
+        final Intent startLocationPickerActivity = new Intent(this, LocationPickerActivity.class);
+        startLocationPickerActivity
+                .putExtra(OSMMapViewActivity.MAPVIEW_ZOOM, mapviewZoom)
+                .putExtra(OSMMapViewActivity.MAPVIEW_CENTER, (Parcelable) mapviewCenterPoint)
+                .putExtra(OSMMapViewActivity.SHOW_MY_LOCATION, mapviewShowCurLocation)
+                .putExtra(OSMMapViewActivity.SELECTED_TILE_SOURCE, selectedTileSourceKey)
+                .putExtra(OSMMapViewActivity.SELECTED_OVERLAYS, new ArrayList<>(selectedOverlaysKeys));
+        startActivity(startLocationPickerActivity);
     }
 
     /**
@@ -75,13 +107,13 @@ public class MainActivity extends OSMMapViewActivity {
             // getting values for request from preferences
             final long intervalSecs = getLocationIntervalSecs();
             final long expirationSecs = 5 * 60;
-            Log.d(d_TAG, "Preparing manual location updates request: interval: " + intervalSecs + " expiration: " + expirationSecs);
+            Log.d(this + "onMyLocationButtonLongClick:", "Preparing manual location updates request: interval: " + intervalSecs + " expiration: " + expirationSecs);
 
             ILocationProvider locationProvider = osmMapViewVM.locationProvider;
             final Task<Void> requestTask = locationProvider.removeLocationUpdates(osmMapViewVM.manualUpdatesCallback)
                     .continueWithTask(task -> {
                         if(!task.isSuccessful())
-                            Log.d(d_TAG, "Removal of pending manual updates failed!");
+                            Log.d(this + "onMyLocationButtonLongClick:", "Removal of pending manual updates failed!");
                         LocationRequest locationRequest = LocationRequest.create();
                         return locationProvider.requestLocationUpdates(locationRequest, osmMapViewVM.manualUpdatesCallback);
                     });

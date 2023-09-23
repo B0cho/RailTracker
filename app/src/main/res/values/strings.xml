@@ -26,4 +26,9 @@
     <string name="location_cat_key">location_cat_key</string>
     <string name="myLocationsMenuItem">My locations</string>
 
+    <!-- Texts for PositionPicker -->
+    <string name="PositionPicker.toolbar_title_text">New location</string>
+    <string name="PositionPicker.toolbar_subtitle_text">Coordinates</string>
+    <string name="PositionPicker.hint_text">Aim to pick coordinates</string>
+    <string name="PositionPicker.confirm_button_text">Pick position</string>
 </resources>

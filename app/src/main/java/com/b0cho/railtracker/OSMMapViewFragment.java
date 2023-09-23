@@ -101,6 +101,8 @@ public class OSMMapViewFragment extends Fragment {
             requireActivity().onTouchEvent(motionEvent);
             if(motionEvent.getAction() == MotionEvent.ACTION_MOVE) {
                 osmMapViewVM.setFollowingLocation(false);
+                osmMapViewVM.setCenterPoint(mapView.getMapCenter());
+                osmMapViewVM.setZoom(mapView.getZoomLevelDouble());
             }
             return false;
         });
@@ -149,9 +151,15 @@ public class OSMMapViewFragment extends Fragment {
             reloadOverlays();
         });
 
-        // initial setting of center position and zoom
-        osmMapViewVM.getCenterPoint().observe(requireActivity(), geoPoint -> mapView.getController().setCenter(geoPoint));
-        osmMapViewVM.getZoom().observe(requireActivity(), zoom -> mapView.getController().setZoom(zoom));
+        // map center point + zoom
+        osmMapViewVM.getCenterPoint().observe(requireActivity(), geoPoint -> {
+            if(!mapView.getMapCenter().equals(geoPoint))
+                mapView.getController().setCenter(geoPoint);
+        });
+        osmMapViewVM.getZoom().observe(requireActivity(), zoom -> {
+            if(mapView.getZoomLevelDouble() != zoom)
+                mapView.getController().setZoom(zoom);
+        });
 
         // setting mapview control
         mapView.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.NEVER);
