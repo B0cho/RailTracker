@@ -3,11 +3,19 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/obiek/.gradle/caches/transforms-3/444b3e5e0fb93c78f1e5e145ca1b4cad/transformed/jetified-play-services-cast-framework-12.0.1/res/layout/cast_expanded_controller_activity.xml" value="0.36666666666666664" />
         <entry key="..\:/Users/obiek/StudioProjects/RailTracker/app/src/main/res/drawable-anydpi/ic_overlays.xml" value="0.3675" />
+        <entry key="..\:/Users/obiek/StudioProjects/RailTracker/app/src/main/res/drawable-hdpi/ic_button_save.xml" value="0.332" />
         <entry key="..\:/Users/obiek/StudioProjects/RailTracker/app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.3675" />
+        <entry key="..\:/Users/obiek/StudioProjects/RailTracker/app/src/main/res/drawable/ic_baseline_save_24.xml" value="0.2" />
         <entry key="..\:/Users/obiek/StudioProjects/RailTracker/app/src/main/res/drawable/ic_launcher_background.xml" value="0.3675" />
+        <entry key="..\:/Users/obiek/StudioProjects/RailTracker/app/src/main/res/drawable/selector_save_button.xml" value="0.332" />
+        <entry key="..\:/Users/obiek/StudioProjects/RailTracker/app/src/main/res/layout-w1240dp/content_scrolling.xml" value="0.392578125" />
+        <entry key="..\:/Users/obiek/StudioProjects/RailTracker/app/src/main/res/layout-w936dp/content_scrolling.xml" value="0.275" />
+        <entry key="..\:/Users/obiek/StudioProjects/RailTracker/app/src/main/res/layout/activity_location_editor.xml" value="0.36666666666666664" />
         <entry key="..\:/Users/obiek/StudioProjects/RailTracker/app/src/main/res/layout/activity_location_picker.xml" value="0.33" />
         <entry key="..\:/Users/obiek/StudioProjects/RailTracker/app/src/main/res/layout/activity_main.xml" value="0.4" />
+        <entry key="..\:/Users/obiek/StudioProjects/RailTracker/app/src/main/res/layout/content_scrolling.xml" value="0.36666666666666664" />
         <entry key="..\:/Users/obiek/StudioProjects/RailTracker/app/src/main/res/layout/fragment_mapview.xml" value="0.36666666666666664" />
         <entry key="..\:/Users/obiek/StudioProjects/RailTracker/app/src/main/res/layout/fragment_position_picker.xml" value="0.3435114503816794" />
         <entry key="..\:/Users/obiek/StudioProjects/RailTracker/app/src/main/res/layout/fragment_tracking.xml" value="0.36666666666666664" />
@@ -16,6 +24,7 @@
         <entry key="..\:/Users/obiek/StudioProjects/RailTracker/app/src/main/res/layout/marker_info_window_my_location.xml" value="1.25" />
         <entry key="..\:/Users/obiek/StudioProjects/RailTracker/app/src/main/res/layout/settings_activity.xml" value="0.35260416666666666" />
         <entry key="..\:/Users/obiek/StudioProjects/RailTracker/app/src/main/res/menu/mapview_toolbar_menu.xml" value="0.36666666666666664" />
+        <entry key="..\:/Users/obiek/StudioProjects/RailTracker/app/src/main/res/menu/menu_location_editor.xml" value="0.5" />
         <entry key="..\:/Users/obiek/StudioProjects/RailTracker/app/src/main/res/menu/toolbar_menu.xml" value="0.536" />
         <entry key="..\:/Users/obiek/StudioProjects/RailTracker/app/src/main/res/xml/root_preferences.xml" value="0.36666666666666664" />
       </map>

@@ -5,30 +5,18 @@
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorAccent">#7CB342</item>
         <item name="android:textColorSecondary">#FFFFFF</item>
     </style>
 
-    <style name="PositionPicker">
-        <item name="android:textColor">#FFFFFF</item>
+    <style name="button_confirm" parent="AppTheme">
+        <!-- TBD -->
     </style>
 
-    <style name="PositionPicker.Button_Confirm">
-        <item name="backgroundTint">#6BC547</item>
-        <item name="android:textColor">#CEFFFFFF</item>
-    </style>
-
-    <style name="PositionPicker.Button_Cancel">
-        <item name="backgroundTint">#B71C1C</item>
-        <item name="android:textColor">#CEFFFFFF</item>
-    </style>
-
-    <style name="PositionPicker.Layout">
-        <item name="android:background">@color/colorPrimary</item>
-    </style>
-
-    <style name="PositionPicker.Hint">
+    <style name="stylePositionPicker">
         <item name="android:textSize">18sp</item>
+        <item name="android:background">#919191</item>
+        <item name="android:textColor">#FFFFFF</item>
     </style>
 
 </resources>

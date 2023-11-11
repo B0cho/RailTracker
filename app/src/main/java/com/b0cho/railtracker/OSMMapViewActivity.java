@@ -1,8 +1,9 @@
 package com.b0cho.railtracker;
 
 import android.Manifest;
-import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -22,10 +23,7 @@ import com.google.android.material.snackbar.Snackbar;
 import org.osmdroid.util.GeoPoint;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 public class OSMMapViewActivity extends AppCompatActivity {
     protected OSMMapViewVM osmMapViewVM;
@@ -33,11 +31,7 @@ public class OSMMapViewActivity extends AppCompatActivity {
     protected Menu overlaysMenu;
 
     // KEYS FOR INTENT EXTRAS
-    public static final String MAPVIEW_CENTER = "MAPVIEW_CENTER";
-    public static final String MAPVIEW_ZOOM = "MAPVIEW_ZOOM";
-    public static final String SHOW_MY_LOCATION = "MAPVIEW_MY_LOCATION";
-    public static final String SELECTED_TILE_SOURCE = "SELECTED_TILE_SOURCE";
-    public static final String SELECTED_OVERLAYS = "SELECTED_OVERLAYS";
+    public static final String MAPVIEW_STATE = "PARCELABLE_MAPVIEW_STATE";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -45,48 +39,39 @@ public class OSMMapViewActivity extends AppCompatActivity {
         osmMapViewVM = new ViewModelProvider(this).get(OSMMapViewVM.class);
 
         // activity initial setting
-        if(savedInstanceState == null) {
-            final Intent intent = getIntent();
-            if(intent != null) {
-                final GeoPoint intentGeoPoint = intent.getParcelableExtra(MAPVIEW_CENTER);
-                if(intentGeoPoint != null)
-                    osmMapViewVM.setCenterPoint(intentGeoPoint);
+        final MapViewDTO mapViewLaunchState = getIntent().getParcelableExtra(MAPVIEW_STATE, MapViewDTO.class);
+        if(savedInstanceState == null && mapViewLaunchState != null) {
+            try {
+                // center point
+                osmMapViewVM.setCenterPoint(mapViewLaunchState.center);
 
-                if(intent.hasExtra(MAPVIEW_ZOOM)) {
-                    final double intentZoom = intent.getDoubleExtra(MAPVIEW_ZOOM, -1.0);
-                    if (intentZoom > 0)
-                        osmMapViewVM.setZoom(intentZoom);
-                    else
-                        Log.e(this + "onCreate: ", "Invalid intent extra " + MAPVIEW_ZOOM + " = " + intentZoom + " - ignored.");
-                }
+                // zoom
+                if(mapViewLaunchState.zoom > 0)
+                    osmMapViewVM.setZoom(mapViewLaunchState.zoom);
+                else
+                    Log.e(this + "onCreate: ", "Invalid intent extra mapview zoom = " + mapViewLaunchState.zoom + " - ignored.");
 
-                if(intent.hasExtra(SHOW_MY_LOCATION)) {
-                    osmMapViewVM.setShowCurrentLocation(intent.getBooleanExtra(SHOW_MY_LOCATION, false));
-                }
+                // current position
+                osmMapViewVM.setShowCurrentLocation(mapViewLaunchState.showCurrentPosition);
 
-                if(intent.hasExtra(SELECTED_TILE_SOURCE)) {
-                    final int intentSelectedTileSource = intent.getIntExtra(SELECTED_TILE_SOURCE, -1);
-                    if(osmMapViewVM.offeredSourcesMenuInput().containsKey(intentSelectedTileSource))
-                        osmMapViewVM.setTileSourceSelection(intentSelectedTileSource);
-                    else
-                        Log.e(this + "onCreate: ", "Invalid intent extra " + SELECTED_TILE_SOURCE + " = " + intentSelectedTileSource + " - ignored.");
-                }
+                // tile source key
+                if(osmMapViewVM.offeredSourcesMenuInput().containsKey(mapViewLaunchState.selectedTileSourceKey))
+                    osmMapViewVM.setTileSourceSelection(mapViewLaunchState.selectedTileSourceKey);
+                else
+                    Log.e(this + "onCreate: ", "Invalid intent extra mapview tile source key = " + mapViewLaunchState.selectedTileSourceKey + " - ignored.");
 
-                if(intent.hasExtra(SELECTED_OVERLAYS)) {
-                    final ArrayList<Integer> intentSelectedOverlays = intent.getIntegerArrayListExtra(SELECTED_OVERLAYS);
-                    if(intentSelectedOverlays != null) {
-                        osmMapViewVM.getOverlaysKeys().forEach(key -> osmMapViewVM.updateOverlaysSelection(key, false));
-                        intentSelectedOverlays.forEach(key -> {
-                            if(osmMapViewVM.getOverlaysKeys().contains(key)) {
-                                osmMapViewVM.updateOverlaysSelection(key, true);
-                            }
-                            else
-                                Log.e(this + "onCreate: ", "Invalid intent extra " + SELECTED_OVERLAYS + " key = " + key + " - ignored.");
-                        });
+                // overlays keys
+                osmMapViewVM.getOverlaysKeys().forEach(key -> osmMapViewVM.updateOverlaysSelection(key, false));
+                mapViewLaunchState.selectedOverlaysKeys.forEach(key -> {
+                    if(osmMapViewVM.getOverlaysKeys().contains(key)) {
+                        osmMapViewVM.updateOverlaysSelection(key, true);
                     }
                     else
-                        Log.e(this + "onCreate: ", "Invalid intent extra " + SELECTED_OVERLAYS + " = null - ignored.");
-                }
+                        Log.e(this + "onCreate: ", "Invalid intent extra mapview overlay key = " + key + " - ignored.");
+                });
+
+            } catch (NullPointerException e) {
+                Log.e(this + "onCreate: ", "Fatal error when retrieving MapViewDTO: " + e);
             }
         }
     }
@@ -194,5 +179,60 @@ public class OSMMapViewActivity extends AppCompatActivity {
         return Long.parseLong(PreferenceManager
                 .getDefaultSharedPreferences(getApplicationContext())
                 .getString(getString(R.string.location_timeout_key), "25"));
+    }
+
+    public static class MapViewDTO implements Parcelable {
+        public GeoPoint center;
+        public double zoom;
+        public boolean showCurrentPosition;
+        public int selectedTileSourceKey;
+        public ArrayList<Integer> selectedOverlaysKeys;
+
+        public MapViewDTO(
+                final GeoPoint mapCenter,
+                final double mapZoom,
+                final boolean mapShowingCurrPosition,
+                final int mapTileSourceKey,
+                final ArrayList<Integer> mapSelectedOverlays) {
+            center = mapCenter;
+            zoom = mapZoom;
+            showCurrentPosition = mapShowingCurrPosition;
+            selectedTileSourceKey = mapTileSourceKey;
+            selectedOverlaysKeys = mapSelectedOverlays;
+        }
+
+        protected MapViewDTO(Parcel in) {
+            center = in.readParcelable(GeoPoint.class.getClassLoader(), GeoPoint.class);
+            zoom = in.readDouble();
+            showCurrentPosition = in.readByte() != 0;
+            selectedTileSourceKey = in.readInt();
+            selectedOverlaysKeys = in.readArrayList(ArrayList.class.getClassLoader(), Integer.class);
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            dest.writeParcelable(center, flags);
+            dest.writeDouble(zoom);
+            dest.writeByte((byte) (showCurrentPosition ? 1 : 0));
+            dest.writeInt(selectedTileSourceKey);
+            dest.writeList(selectedOverlaysKeys);
+        }
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        public static final Creator<MapViewDTO> CREATOR = new Creator<MapViewDTO>() {
+            @Override
+            public MapViewDTO createFromParcel(Parcel in) {
+                return new MapViewDTO(in);
+            }
+
+            @Override
+            public MapViewDTO[] newArray(int size) {
+                return new MapViewDTO[size];
+            }
+        };
     }
 }

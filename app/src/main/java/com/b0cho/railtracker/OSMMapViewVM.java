@@ -3,6 +3,7 @@ package com.b0cho.railtracker;
 import android.app.Application;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
@@ -48,6 +49,7 @@ public class OSMMapViewVM extends AndroidViewModel {
     private final MutableLiveData<Boolean> showCurrentLocation;
     private final MutableLiveData<Boolean> showMyPinLocations;
     private final MutableLiveData<IGeoPoint> lastPosition;
+    private GeoPoint targetMarkerGeopoint;
 
     // TODO:
     private final MutableLiveData<List<PinLocationEntity>> myPinLocationsLiveData;
@@ -75,6 +77,7 @@ public class OSMMapViewVM extends AndroidViewModel {
         followingLocation = new MutableLiveData<>(false);
         showCurrentLocation  = new MutableLiveData<>(false);
         showMyPinLocations = new MutableLiveData<>(false);
+        targetMarkerGeopoint = null;
 
         // creating hashmap of offered sources for views + setting initial value
         int key = 0;
@@ -298,5 +301,23 @@ public class OSMMapViewVM extends AndroidViewModel {
      */
     public IMyLocationProvider getMyLocationProvider() {
         return (IMyLocationProvider) locationProvider;
+    }
+
+    /**
+     * Adds GeoPoint, that can be used by VM users to add static Marker (e.g Target Marker) during e.g. OnCreate
+     * Value is NOT observable
+     * @param geoPoint to be used to create Marker. Pass null, to remove saved geopoint.
+     */
+    public void setTargetMarker(@Nullable GeoPoint geoPoint) {
+        targetMarkerGeopoint = geoPoint;
+    }
+
+    /**
+     * Returns GeoPoint, that can be used by VM users to add static Marker (e.g Target Marker) during e.g. OnCreate
+     * Value is NOT observable
+     * @return GeoPoint wrapped by Optional. Empty, if geopoint was not set or removed.
+     */
+    public Optional<GeoPoint> getTargetMarkerGeoPoint() {
+        return Optional.ofNullable(targetMarkerGeopoint);
     }
 }

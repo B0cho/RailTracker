@@ -2,7 +2,6 @@ package com.b0cho.railtracker;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -16,7 +15,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
-import org.osmdroid.api.IGeoPoint;
+import org.osmdroid.util.GeoPoint;
 
 import java.util.ArrayList;
 import java.util.Set;
@@ -29,12 +28,11 @@ public class MainActivity extends OSMMapViewActivity {
     private MainActivityViewModel mainActivityViewModel;
     private FloatingActionButton myLocationButton;
     private FloatingActionButton addMyLocationButton;
-    private IGeoPoint mapviewCenterPoint;
+    private GeoPoint mapviewCenterPoint;
     private Double mapviewZoom;
     private Boolean mapviewShowCurLocation;
     private Integer selectedTileSourceKey;
     private Set<Integer> selectedOverlaysKeys;
-
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -70,7 +68,12 @@ public class MainActivity extends OSMMapViewActivity {
         addMyLocationButton.setOnClickListener(this::onAddMyLocationButtonClick);
 
         // observing values from viewmodel
-        osmMapViewVM.getCenterPoint().observe(this, centerPoint -> mapviewCenterPoint = centerPoint);
+        osmMapViewVM.getCenterPoint().observe(this, centerPoint -> {
+            if(mapviewCenterPoint == null)
+                mapviewCenterPoint = new GeoPoint(centerPoint);
+            else
+                mapviewCenterPoint.setCoords(centerPoint.getLatitude(), centerPoint.getLongitude());
+        });
         osmMapViewVM.getZoom().observe(this, zoom -> mapviewZoom = zoom);
         osmMapViewVM.isLocationShown().observe(this, isShown -> mapviewShowCurLocation = isShown);
         osmMapViewVM.getSelectedTileSourceId().observe(this, selectedId -> selectedTileSourceKey = selectedId);
@@ -83,14 +86,19 @@ public class MainActivity extends OSMMapViewActivity {
     }
 
     private void onAddMyLocationButtonClick(View view) {
-        final Intent startLocationPickerActivity = new Intent(this, LocationPickerActivity.class);
-        startLocationPickerActivity
-                .putExtra(OSMMapViewActivity.MAPVIEW_ZOOM, mapviewZoom)
-                .putExtra(OSMMapViewActivity.MAPVIEW_CENTER, (Parcelable) mapviewCenterPoint)
-                .putExtra(OSMMapViewActivity.SHOW_MY_LOCATION, mapviewShowCurLocation)
-                .putExtra(OSMMapViewActivity.SELECTED_TILE_SOURCE, selectedTileSourceKey)
-                .putExtra(OSMMapViewActivity.SELECTED_OVERLAYS, new ArrayList<>(selectedOverlaysKeys));
-        startActivity(startLocationPickerActivity);
+        final Intent createNewLocation = new Intent(this, LocationEditorActivity.class);
+        createNewLocation
+                .putExtra(LocationEditorActivity.LAUNCH_LOCATION_PICKER, true)
+                .putExtra(
+                        OSMMapViewActivity.MAPVIEW_STATE,
+                        new MapViewDTO(
+                                mapviewCenterPoint,
+                                mapviewZoom,
+                                mapviewShowCurLocation,
+                                selectedTileSourceKey,
+                                new ArrayList<>(selectedOverlaysKeys)
+                                ));
+        startActivity(createNewLocation);
     }
 
     /**

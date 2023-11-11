@@ -27,8 +27,15 @@
     <string name="myLocationsMenuItem">My locations</string>
 
     <!-- Texts for PositionPicker -->
-    <string name="PositionPicker.toolbar_title_text">New location</string>
-    <string name="PositionPicker.toolbar_subtitle_text">Coordinates</string>
-    <string name="PositionPicker.hint_text">Aim to pick coordinates</string>
-    <string name="PositionPicker.confirm_button_text">Pick position</string>
+    <string name="position_picker_title_text">New location</string>
+    <string name="position_picker_subtitle">Coordinates</string>
+    <string name="position_picker_hint">Aim to pick coordinates</string>
+    <string name="position_picker_confirm_btn_text">Pick position</string>
+
+    <!-- Texts for LocationEditor -->
+    <string name="location_editor_toolbar_title">Edit location</string>
+    <string name="location_editor_name_hint">Location name</string>
+    <string name="location_editor_notes_hint">Notes</string>
+    <string name="location_editor_save_button_text">SAVE</string>
+
 </resources>
