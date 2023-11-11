@@ -17,6 +17,7 @@ import androidx.preference.PreferenceManager;
 
 import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.config.Configuration;
+import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.CopyrightOverlay;
@@ -55,6 +56,7 @@ public class OSMMapViewFragment extends Fragment {
     private boolean showMyCurrentLocation;
     private List<Marker> myPinLocationsMarkers;
     private MarkerInfoWindow myPinLocationIW;
+    private Marker targetMarker;
 
     public OSMMapViewFragment() {
         // Required empty public constructor
@@ -72,6 +74,7 @@ public class OSMMapViewFragment extends Fragment {
 
         locationOverlay = new MyLocationNewOverlay(mapView);
         myPinLocationsMarkers = new ArrayList<>();
+        targetMarker = null;
 
         myPinLocationIW = new PinLocationInfoWindow(R.layout.marker_info_window_my_location, mapView, new PinLocationInfoWindow.OnVisibilityChangeListener() {
             @Override
@@ -176,6 +179,16 @@ public class OSMMapViewFragment extends Fragment {
                 osmMapViewVM.getLastPosition().removeObserver(locationObserver);
             }
         });
+
+        // adding target marker if set in VM
+        if(osmMapViewVM.getTargetMarkerGeoPoint().isPresent()) {
+            targetMarker = new Marker(mapView);
+            targetMarker.setPosition(osmMapViewVM.getTargetMarkerGeoPoint().get());
+            targetMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+            targetMarker.setPanToView(false);
+            targetMarker.setInfoWindow(null);
+            // TODO: update icon of target marker
+        }
     }
 
     private void reloadOverlays() {
@@ -185,6 +198,8 @@ public class OSMMapViewFragment extends Fragment {
         // adding overlays with locations
         if(showMyPinLocationMarkers)
             mapView.getOverlays().addAll(myPinLocationsMarkers);
+        if(targetMarker != null)
+            mapView.getOverlays().add(targetMarker);
         if(showMyCurrentLocation)
             mapView.getOverlays().add(locationOverlay);
 

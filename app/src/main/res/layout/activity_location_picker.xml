@@ -7,7 +7,7 @@
     tools:context=".LocationPickerActivity">
 
     <androidx.appcompat.widget.Toolbar
-        android:id="@+id/mapViewToolbar"
+        android:id="@+id/locationPickerToolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/colorPrimaryDark"
@@ -18,8 +18,8 @@
         app:layout_constraintTop_toTopOf="parent"
         app:menu="@menu/mapview_toolbar_menu"
         app:navigationIcon="?attr/homeAsUpIndicator"
-        app:title="@string/PositionPicker.toolbar_title_text"
-        app:subtitle="@string/PositionPicker.toolbar_subtitle_text"
+        app:title="@string/position_picker_title_text"
+        app:subtitle="@string/position_picker_subtitle"
         app:titleTextColor="@android:color/background_light" />
 
     <androidx.fragment.app.FragmentContainerView
@@ -30,7 +30,7 @@
         app:layout_constraintBottom_toTopOf="@+id/constraintLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/mapViewToolbar"
+        app:layout_constraintTop_toBottomOf="@+id/locationPickerToolbar"
         tools:layout="@layout/fragment_mapview" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -54,19 +54,19 @@
         app:srcCompat="@drawable/ic_menu_mylocation" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        style="@style/PositionPicker.Layout"
+        style="@style/stylePositionPicker"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/mapViewToolbar">
+        app:layout_constraintTop_toBottomOf="@+id/locationPickerToolbar">
 
         <TextView
             android:id="@+id/HintTextView"
-            style="@style/PositionPicker.Hint"
+            style="@style/stylePositionPicker"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/PositionPicker.hint_text"
+            android:text="@string/position_picker_hint"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -75,7 +75,7 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraintLayout"
-        style="@style/PositionPicker.Layout"
+        style="@style/stylePositionPicker"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -83,13 +83,15 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <Button
+            style="@style/Widget.AppCompat.Button.Colored"
             android:id="@+id/confirmPositionButton"
-            style="@style/PositionPicker.Button_Confirm"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
-            android:text="@string/PositionPicker.confirm_button_text"
+            android:enabled="true"
+            android:text="@string/position_picker_confirm_btn_text"
+            android:theme="@style/button_confirm"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
