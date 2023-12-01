@@ -1,9 +1,11 @@
 package com.b0cho.railtracker
 
+import android.database.sqlite.SQLiteException
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.viewModels
@@ -13,8 +15,10 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.*
 import org.osmdroid.util.GeoPoint
 import javax.inject.Inject
 
@@ -29,6 +33,7 @@ class LocationEditorActivity : AppCompatActivity() {
     private lateinit var mLocationPickerLauncher: ActivityResultLauncher<LocationPickerDTO?>
     private lateinit var mLocationName: String
     private var mLocationPosition: GeoPoint? = null
+    private var mPendingSaveDialog: AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -101,11 +106,50 @@ class LocationEditorActivity : AppCompatActivity() {
 
             with(findViewById<Button>(R.id.saveButton)) {
                 isLocationSaveable.observe(this@LocationEditorActivity) { isEnabled = it }
+                setOnClickListener {
+                    viewModelScope.launch {
+                        val insertJob = launch {
+                            try {
+                                mLocationEditorVM.insertLocationIntoDB()
+                                Toast.makeText(applicationContext, "$mLocationName saved successfully!", Toast.LENGTH_SHORT).show()
+                                finish()
+                            } catch (e: Exception) {
+                                when(e) {
+                                    is SQLiteException,
+                                    is IllegalStateException -> {
+                                        Toast.makeText(applicationContext, "Save failed!", Toast.LENGTH_SHORT).show()
+                                    }
+                                    else -> throw e
+                                }
+                            }
+                        }
+                        // additional job to launch a terminate dialog if inserting lasts more than 1s
+                        launch {
+                            delay(1000L)
+                            mLocationEditorVM.setPendingSave(insertJob)
+                        }
+                    }
+                }
             }
 
             locationName.observe(this@LocationEditorActivity) { mLocationName = it }
             locationPosition.observe(this@LocationEditorActivity) { mLocationPosition = it }
             isLocationSaved.observe(this@LocationEditorActivity) { exitDialogCallback.isEnabled = !it }
+            pendingSavingJob.observe(this@LocationEditorActivity) {
+                it?.let {
+                    it.invokeOnCompletion {
+                        mPendingSaveDialog?.dismiss()
+                    }
+                    if(it.isActive) {
+                        mPendingSaveDialog =
+                            AlertDialog.Builder(this@LocationEditorActivity)
+                                .setMessage("Saving...")
+                                .setNegativeButton("Cancel") { _, _ -> it.cancel() }
+                                .setCancelable(false)
+                                .show()
+                    }
+                }
+            }
         }
 
         mLocationPickerLauncher =
@@ -135,10 +179,19 @@ class LocationEditorActivity : AppCompatActivity() {
         onBackPressedDispatcher.onBackPressed()
         return false
     }
+
+    override fun onStop() {
+        super.onStop()
+        // closing and destroying dialog due to unintended attaching on exited activity
+        mPendingSaveDialog?.dismiss()
+        mPendingSaveDialog = null
+    }
 }
 
 @HiltViewModel
-private class LocationEditorVM @Inject constructor() : ViewModel() {
+private class LocationEditorVM @Inject constructor(
+    private val pinLocationsDao: MyLocationDao,
+) : ViewModel() {
     var launchLocationPicker = false
     var closeByLocationPicker = false
     var mapViewDTO: OSMMapViewActivity.MapViewDTO? = null
@@ -173,7 +226,29 @@ private class LocationEditorVM @Inject constructor() : ViewModel() {
     val isLocationSaved: LiveData<Boolean>
         get() = mIsLocationSaved
 
+    private val mSavingJob: MutableLiveData<Job?> = MutableLiveData(null)
+    val pendingSavingJob: LiveData<Job?>
+        get() = mSavingJob
+
     private fun validateLocationData() {
         mIsSaveable.value = !mName.value.isNullOrEmpty() && mPosition.value != null
+    }
+
+    suspend fun insertLocationIntoDB() = withContext(Dispatchers.IO) {
+        pinLocationsDao.insert(
+                MyLocation(
+                    name = mName.value!!,
+                    position = mPosition.value!!,
+                    notes = mNotes.value,
+                )
+            ).also {
+                if(it == 0L) {
+                    throw SQLiteException("INSERT of Location FAILED")
+                }
+            }
+    }
+
+    fun setPendingSave(insertJob: Job?) {
+        mSavingJob.value = insertJob
     }
 }

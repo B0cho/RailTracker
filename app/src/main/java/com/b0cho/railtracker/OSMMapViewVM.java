@@ -41,7 +41,7 @@ public class OSMMapViewVM extends AndroidViewModel {
 
     private final MutableLiveData<HashMap<Integer, Pair<String, Overlay>>> selectedOverlaysHashMap;
     private final MutableLiveData<Pair<Integer, ITileSource>> selectedTileSourcePair;
-    private final MutableLiveData<Optional<PinLocationEntity>> selectedPinLocationIWObject;
+    private final MutableLiveData<Optional<MyLocation>> selectedPinLocationIWObject;
 
     private final MutableLiveData<IGeoPoint> centerPoint;
     private final MutableLiveData<Double> zoom;
@@ -52,7 +52,7 @@ public class OSMMapViewVM extends AndroidViewModel {
     private GeoPoint targetMarkerGeopoint;
 
     // TODO:
-    private final MutableLiveData<List<PinLocationEntity>> myPinLocationsLiveData;
+    private final MutableLiveData<List<MyLocation>> myPinLocationsLiveData;
 
     @Inject
     public OSMMapViewVM(
@@ -285,14 +285,14 @@ public class OSMMapViewVM extends AndroidViewModel {
     /**
      * @param relatedObject to be set as currently selected related Object
      */
-    public void setSelectedPinLocationIWObject(final PinLocationEntity relatedObject) {
+    public void setSelectedPinLocationIWObject(final MyLocation relatedObject) {
         selectedPinLocationIWObject.setValue(Optional.ofNullable(relatedObject));
     }
 
     /**
      * @return LiveData of list with loaded 'my locations
      */
-    public LiveData<List<PinLocationEntity>> myPinLocationsLiveData() {
+    public LiveData<List<MyLocation>> myPinLocationsLiveData() {
         return myPinLocationsLiveData;
     }
 

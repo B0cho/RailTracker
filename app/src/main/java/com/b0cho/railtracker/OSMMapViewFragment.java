@@ -17,7 +17,6 @@ import androidx.preference.PreferenceManager;
 
 import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.config.Configuration;
-import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.CopyrightOverlay;
@@ -79,8 +78,8 @@ public class OSMMapViewFragment extends Fragment {
         myPinLocationIW = new PinLocationInfoWindow(R.layout.marker_info_window_my_location, mapView, new PinLocationInfoWindow.OnVisibilityChangeListener() {
             @Override
             public void onOpen(@Nullable Object item) {
-                if(item instanceof PinLocationEntity)
-                    osmMapViewVM.setSelectedPinLocationIWObject((PinLocationEntity) item);
+                if(item instanceof MyLocation)
+                    osmMapViewVM.setSelectedPinLocationIWObject((MyLocation) item);
             }
 
             @Override
@@ -132,7 +131,7 @@ public class OSMMapViewFragment extends Fragment {
             myPinLocationsMarkers.clear();
             myPinLocationsMarkers.addAll(myPinLocationEntities.stream().map(pinLocationEntity -> {
                 final Marker marker = new Marker(mapView);
-                marker.setPosition(pinLocationEntity.getGeoPoint());
+                marker.setPosition(pinLocationEntity.getPosition());
                 marker.setTitle(pinLocationEntity.getName());
                 marker.setInfoWindow(myPinLocationIW);
                 marker.setRelatedObject(pinLocationEntity);
