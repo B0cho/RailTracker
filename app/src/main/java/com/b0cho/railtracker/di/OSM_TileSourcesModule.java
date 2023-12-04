@@ -1,4 +1,4 @@
-package com.b0cho.railtracker;
+package com.b0cho.railtracker.di;
 
 import org.osmdroid.tileprovider.tilesource.ITileSource;
 import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase;

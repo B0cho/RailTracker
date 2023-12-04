@@ -13,6 +13,8 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceFragmentCompat;
 
+import com.b0cho.railtracker.di.SettingsActivityModule;
+
 import java.util.Objects;
 
 import javax.inject.Inject;
@@ -42,7 +44,7 @@ public class SettingsActivity extends AppCompatActivity {
         @Inject
         ILocationProvider appLocationProvider;
 
-        @ClearUserdataDialogBuilder
+        @SettingsActivityModule.ClearUserdataDialogBuilder
         @Inject
         AlertDialog.Builder clearUserdataDialogBuilder;
 

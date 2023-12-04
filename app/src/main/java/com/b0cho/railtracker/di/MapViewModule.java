@@ -1,8 +1,11 @@
-package com.b0cho.railtracker;
+package com.b0cho.railtracker.di;
 
 import android.content.Context;
 
 import androidx.core.content.ContextCompat;
+
+import com.b0cho.railtracker.OverlayCopyrightOverlay;
+import com.b0cho.railtracker.R;
 
 import org.osmdroid.views.overlay.CopyrightOverlay;
 

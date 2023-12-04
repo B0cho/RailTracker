@@ -10,9 +10,9 @@ import javax.inject.Inject;
 import dagger.hilt.android.lifecycle.HiltViewModel;
 
 @HiltViewModel
-public class MainActivityViewModel extends AndroidViewModel {
+public class MainActivityVM extends AndroidViewModel {
     @Inject
-    public MainActivityViewModel(
+    public MainActivityVM(
             @NonNull Application application) {
         super(application);
     }

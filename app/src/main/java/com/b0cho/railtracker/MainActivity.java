@@ -25,7 +25,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 // MAIN ACTIVITY
 @AndroidEntryPoint
 public class MainActivity extends OSMMapViewActivity {
-    private MainActivityViewModel mainActivityViewModel;
+    private MainActivityVM mainActivityVM;
     private FloatingActionButton myLocationButton;
     private FloatingActionButton addMyLocationButton;
     private GeoPoint mapviewCenterPoint;
@@ -39,7 +39,7 @@ public class MainActivity extends OSMMapViewActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mainActivityViewModel = new ViewModelProvider(this).get(MainActivityViewModel.class);
+        mainActivityVM = new ViewModelProvider(this).get(MainActivityVM.class);
 
         Toolbar toolbar = findViewById(R.id.mapViewToolbar);
         setSupportActionBar(toolbar);
