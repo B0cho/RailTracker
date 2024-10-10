@@ -4,10 +4,8 @@ import android.content.Context;
 
 import androidx.core.content.ContextCompat;
 
-import com.b0cho.railtracker.OverlayCopyrightOverlay;
+import com.b0cho.railtracker.CopyrightOverlay;
 import com.b0cho.railtracker.R;
-
-import org.osmdroid.views.overlay.CopyrightOverlay;
 
 import dagger.Module;
 import dagger.Provides;
@@ -19,18 +17,18 @@ import dagger.hilt.android.qualifiers.ActivityContext;
 @InstallIn(ActivityComponent.class)
 public class MapViewModule {
     @Provides
-    public CopyrightOverlay provideCopyrightOverlay(@ActivityContext Context activityContext) {
+    public org.osmdroid.views.overlay.CopyrightOverlay provideCopyrightOverlay(@ActivityContext Context activityContext) {
         final int copyrightColor = ContextCompat.getColor(activityContext, R.color.copyrightText);
-        CopyrightOverlay copyrightOverlay = new CopyrightOverlay(activityContext);
+        org.osmdroid.views.overlay.CopyrightOverlay copyrightOverlay = new org.osmdroid.views.overlay.CopyrightOverlay(activityContext);
         copyrightOverlay.setOffset(10, 10);
         copyrightOverlay.setTextColor(copyrightColor);
         return copyrightOverlay;
     }
 
     @Provides
-    public OverlayCopyrightOverlay provideOverlayCopyrightOverlay(@ActivityContext Context activityContext) {
+    public CopyrightOverlay provideOverlayCopyrightOverlay(@ActivityContext Context activityContext) {
         final int copyrightColor = ContextCompat.getColor(activityContext, R.color.copyrightText);
-        OverlayCopyrightOverlay overlayCopyright = new OverlayCopyrightOverlay(activityContext);
+        CopyrightOverlay overlayCopyright = new CopyrightOverlay(activityContext);
         overlayCopyright.setOffset(10, 50);
         overlayCopyright.setTextColor(copyrightColor);
         return overlayCopyright;

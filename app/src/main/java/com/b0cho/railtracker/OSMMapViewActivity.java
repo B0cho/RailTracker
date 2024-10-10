@@ -1,5 +1,7 @@
 package com.b0cho.railtracker;
 
+import static com.b0cho.railtracker.App.logTAG;
+
 import android.Manifest;
 import android.os.Bundle;
 import android.os.Parcel;
@@ -49,7 +51,7 @@ public class OSMMapViewActivity extends AppCompatActivity {
                 if(mapViewLaunchState.zoom > 0)
                     osmMapViewVM.setZoom(mapViewLaunchState.zoom);
                 else
-                    Log.e(this + "onCreate: ", "Invalid intent extra mapview zoom = " + mapViewLaunchState.zoom + " - ignored.");
+                    Log.e(logTAG,this + "onCreate: Invalid intent extra mapview zoom = " + mapViewLaunchState.zoom + " - ignored.");
 
                 // current position
                 osmMapViewVM.setShowCurrentLocation(mapViewLaunchState.showCurrentPosition);
@@ -58,7 +60,7 @@ public class OSMMapViewActivity extends AppCompatActivity {
                 if(osmMapViewVM.offeredSourcesMenuInput().containsKey(mapViewLaunchState.selectedTileSourceKey))
                     osmMapViewVM.setTileSourceSelection(mapViewLaunchState.selectedTileSourceKey);
                 else
-                    Log.e(this + "onCreate: ", "Invalid intent extra mapview tile source key = " + mapViewLaunchState.selectedTileSourceKey + " - ignored.");
+                    Log.e(logTAG, this + "onCreate: Invalid intent extra mapview tile source key = " + mapViewLaunchState.selectedTileSourceKey + " - ignored.");
 
                 // overlays keys
                 osmMapViewVM.getOverlaysKeys().forEach(key -> osmMapViewVM.updateOverlaysSelection(key, false));
@@ -67,11 +69,13 @@ public class OSMMapViewActivity extends AppCompatActivity {
                         osmMapViewVM.updateOverlaysSelection(key, true);
                     }
                     else
-                        Log.e(this + "onCreate: ", "Invalid intent extra mapview overlay key = " + key + " - ignored.");
+                        Log.e(logTAG, this + "onCreate: Invalid intent extra mapview overlay key = " + key + " - ignored.");
                 });
 
+                // 'My Locations' overlay
+                osmMapViewVM.setShowMyLocationsOverlay(mapViewLaunchState.showMyLocationsOverlay);
             } catch (NullPointerException e) {
-                Log.e(this + "onCreate: ", "Fatal error when retrieving MapViewDTO: " + e);
+                Log.e(logTAG, this + "onCreate: Fatal error when retrieving MapViewDTO: " + e);
             }
         }
     }
@@ -134,7 +138,7 @@ public class OSMMapViewActivity extends AppCompatActivity {
             return true;
         }
         if(groupId == R.id.otherOverlaysGroup && itemId == R.id.myLocationsOverlayCheck) {
-            osmMapViewVM.setShowMyPinLocations(!item.isChecked());
+            osmMapViewVM.setShowMyLocationsOverlay(!item.isChecked());
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -187,18 +191,21 @@ public class OSMMapViewActivity extends AppCompatActivity {
         public boolean showCurrentPosition;
         public int selectedTileSourceKey;
         public ArrayList<Integer> selectedOverlaysKeys;
+        public boolean showMyLocationsOverlay;
 
         public MapViewDTO(
                 final GeoPoint mapCenter,
                 final double mapZoom,
                 final boolean mapShowingCurrPosition,
                 final int mapTileSourceKey,
-                final ArrayList<Integer> mapSelectedOverlays) {
+                final ArrayList<Integer> mapSelectedOverlays,
+                final boolean isMyLocationsOverlayShown) {
             center = mapCenter;
             zoom = mapZoom;
             showCurrentPosition = mapShowingCurrPosition;
             selectedTileSourceKey = mapTileSourceKey;
             selectedOverlaysKeys = mapSelectedOverlays;
+            showMyLocationsOverlay = isMyLocationsOverlayShown;
         }
 
         protected MapViewDTO(Parcel in) {
@@ -207,6 +214,7 @@ public class OSMMapViewActivity extends AppCompatActivity {
             showCurrentPosition = in.readByte() != 0;
             selectedTileSourceKey = in.readInt();
             selectedOverlaysKeys = in.readArrayList(ArrayList.class.getClassLoader(), Integer.class);
+            showMyLocationsOverlay = in.readBoolean();
         }
 
         @Override
@@ -216,6 +224,7 @@ public class OSMMapViewActivity extends AppCompatActivity {
             dest.writeByte((byte) (showCurrentPosition ? 1 : 0));
             dest.writeInt(selectedTileSourceKey);
             dest.writeList(selectedOverlaysKeys);
+            dest.writeByte((byte) (showMyLocationsOverlay ? 1 : 0));
         }
 
         @Override

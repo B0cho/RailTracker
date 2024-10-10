@@ -5,6 +5,7 @@ plugins {
     id 'com.google.dagger.hilt.android'
     id 'kotlin-android'
     id 'kotlin-kapt'
+    id 'kotlin-parcelize'
 }
 
 android {
@@ -69,4 +70,8 @@ dependencies {
     annotationProcessor "androidx.room:room-compiler:$room_version"
     // ksp needed for Room
     ksp "androidx.room:room-compiler:$room_version"
+
+    // RxJava
+    implementation 'io.reactivex.rxjava3:rxjava:3.1.8'
+    implementation 'io.reactivex.rxjava3:rxandroid:3.0.2'
 }

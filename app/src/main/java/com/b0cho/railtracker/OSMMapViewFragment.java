@@ -19,7 +19,6 @@ import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
-import org.osmdroid.views.overlay.CopyrightOverlay;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.OverlayWithIW;
@@ -46,15 +45,15 @@ public class OSMMapViewFragment extends Fragment {
     private Observer<IGeoPoint> locationObserver;
     private MyLocationNewOverlay locationOverlay;
     @Inject
-    public CopyrightOverlay mapCopyright;
+    public org.osmdroid.views.overlay.CopyrightOverlay mapCopyright;
     @Inject
-    public OverlayCopyrightOverlay overlayCopyright;
+    public CopyrightOverlay overlayCopyright;
 
     private boolean showMyPinLocationMarkers;
     private ArrayList<Overlay> selectedOverlays;
     private boolean showMyCurrentLocation;
-    private List<Marker> myPinLocationsMarkers;
-    private MarkerInfoWindow myPinLocationIW;
+    private List<Marker> MyLocationsMarkers;
+    private MyLocationInfoWindow MyLocationIW;
     private Marker targetMarker;
 
     public OSMMapViewFragment() {
@@ -72,21 +71,10 @@ public class OSMMapViewFragment extends Fragment {
         mapView.setDestroyMode(false); // used to avoid mWriter getting null after view re-creation
 
         locationOverlay = new MyLocationNewOverlay(mapView);
-        myPinLocationsMarkers = new ArrayList<>();
+        MyLocationsMarkers = new ArrayList<>();
         targetMarker = null;
 
-        myPinLocationIW = new PinLocationInfoWindow(R.layout.marker_info_window_my_location, mapView, new PinLocationInfoWindow.OnVisibilityChangeListener() {
-            @Override
-            public void onOpen(@Nullable Object item) {
-                if(item instanceof MyLocation)
-                    osmMapViewVM.setSelectedPinLocationIWObject((MyLocation) item);
-            }
-
-            @Override
-            public void onClose() {
-                osmMapViewVM.setSelectedPinLocationIWObject(null);
-            }
-        }, null, null);
+        MyLocationIW = new MyLocationInfoWindow(R.layout.marker_info_window_my_location, mapView);
         return view;
     }
 
@@ -127,14 +115,15 @@ public class OSMMapViewFragment extends Fragment {
         });
 
         // 'My locations' data
-        osmMapViewVM.myPinLocationsLiveData().observe(requireActivity(), myPinLocationEntities -> {
-            myPinLocationsMarkers.clear();
-            myPinLocationsMarkers.addAll(myPinLocationEntities.stream().map(pinLocationEntity -> {
+        osmMapViewVM.getMyLocationsData().observe(requireActivity(), MyLocationEntities -> {
+            MyLocationsMarkers.clear();
+            MyLocationsMarkers.addAll(MyLocationEntities.stream().map(entity -> {
                 final Marker marker = new Marker(mapView);
-                marker.setPosition(pinLocationEntity.getPosition());
-                marker.setTitle(pinLocationEntity.getName());
-                marker.setInfoWindow(myPinLocationIW);
-                marker.setRelatedObject(pinLocationEntity);
+                marker.setPosition(entity.getPosition());
+                marker.setTitle(entity.getName());
+                marker.setSubDescription(entity.getNotes());
+                marker.setInfoWindow(MyLocationIW);
+                marker.setRelatedObject(entity);
                 return marker;
             }).collect(Collectors.toList()));
             reloadOverlays();
@@ -149,7 +138,7 @@ public class OSMMapViewFragment extends Fragment {
         // showing 'My locations' overlay
         osmMapViewVM.isMyLocationsOverlayShown().observe(requireActivity(), show -> {
             showMyPinLocationMarkers = show;
-            myPinLocationsMarkers.forEach(OverlayWithIW::closeInfoWindow);
+            MyLocationsMarkers.forEach(OverlayWithIW::closeInfoWindow);
             reloadOverlays();
         });
 
@@ -196,7 +185,7 @@ public class OSMMapViewFragment extends Fragment {
 
         // adding overlays with locations
         if(showMyPinLocationMarkers)
-            mapView.getOverlays().addAll(myPinLocationsMarkers);
+            mapView.getOverlays().addAll(MyLocationsMarkers);
         if(targetMarker != null)
             mapView.getOverlays().add(targetMarker);
         if(showMyCurrentLocation)
@@ -220,6 +209,10 @@ public class OSMMapViewFragment extends Fragment {
         // saving state on detach
         osmMapViewVM.setZoom(mapView.getZoomLevelDouble());
         osmMapViewVM.setCenterPoint(mapView.getMapCenter());
+    }
+
+    public MyLocationInfoWindow getMyLocationInfoWindow() {
+        return MyLocationIW;
     }
 }
 

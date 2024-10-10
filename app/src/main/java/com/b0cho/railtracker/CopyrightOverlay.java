@@ -4,14 +4,13 @@ import android.content.Context;
 import android.graphics.Canvas;
 
 import org.osmdroid.views.MapView;
-import org.osmdroid.views.overlay.CopyrightOverlay;
 import org.osmdroid.views.overlay.Overlay;
 
 /**
  * Extends CopyrightOverlay to handle LicensedOverlays
  */
-public class OverlayCopyrightOverlay extends CopyrightOverlay {
-    public OverlayCopyrightOverlay(Context context) {
+public class CopyrightOverlay extends org.osmdroid.views.overlay.CopyrightOverlay {
+    public CopyrightOverlay(Context context) {
         super(context);
     }
 

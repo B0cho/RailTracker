@@ -29,6 +29,7 @@ import java.util.Set;
 import javax.inject.Inject;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
+import io.reactivex.rxjava3.core.Completable;
 
 @HiltViewModel
 public class OSMMapViewVM extends AndroidViewModel {
@@ -41,25 +42,25 @@ public class OSMMapViewVM extends AndroidViewModel {
 
     private final MutableLiveData<HashMap<Integer, Pair<String, Overlay>>> selectedOverlaysHashMap;
     private final MutableLiveData<Pair<Integer, ITileSource>> selectedTileSourcePair;
-    private final MutableLiveData<Optional<MyLocation>> selectedPinLocationIWObject;
+    private final LiveData<List<MyLocation>> mMyLocationsData;
 
     private final MutableLiveData<IGeoPoint> centerPoint;
     private final MutableLiveData<Double> zoom;
     private final MutableLiveData<Boolean> followingLocation;
     private final MutableLiveData<Boolean> showCurrentLocation;
-    private final MutableLiveData<Boolean> showMyPinLocations;
+    private final MutableLiveData<Boolean> showMyLocationsOverlay;
     private final MutableLiveData<IGeoPoint> lastPosition;
     private GeoPoint targetMarkerGeopoint;
+    private final MyLocationDao myLocationDao;
 
-    // TODO:
-    private final MutableLiveData<List<MyLocation>> myPinLocationsLiveData;
 
     @Inject
     public OSMMapViewVM(
             @NonNull Application application,
             Map<String, ITileSource> tileSources,
             Map<String, Overlay> overlaysSources,
-            @NonNull ILocationProvider locationProvider) {
+            @NonNull ILocationProvider locationProvider,
+            MyLocationDao myLocationDao) {
         super(application);
 
         // init
@@ -67,16 +68,16 @@ public class OSMMapViewVM extends AndroidViewModel {
         overlaysMap = new HashMap<>();
         selectedOverlaysHashMap = new MutableLiveData<>();
         selectedTileSourcePair = new MutableLiveData<>();
-        selectedPinLocationIWObject = new MutableLiveData<>(Optional.empty());
         this.locationProvider = locationProvider;
         lastPosition = new MutableLiveData<>();
-        myPinLocationsLiveData = new MutableLiveData<>();
+        mMyLocationsData = myLocationDao.getAll();
+        this.myLocationDao = myLocationDao;
         // initial settings
         centerPoint = new MutableLiveData<>(new GeoPoint(52.0, 19.5));
         zoom = new MutableLiveData<>(7.0);
         followingLocation = new MutableLiveData<>(false);
         showCurrentLocation  = new MutableLiveData<>(false);
-        showMyPinLocations = new MutableLiveData<>(false);
+        showMyLocationsOverlay = new MutableLiveData<>(false);
         targetMarkerGeopoint = null;
 
         // creating hashmap of offered sources for views + setting initial value
@@ -171,8 +172,8 @@ public class OSMMapViewVM extends AndroidViewModel {
      * Sets visibility of 'My locations' overlay     *
      * @param showOverlay - true, if overlay with 'My locations' should be shown
      */
-    public void setShowMyPinLocations(boolean showOverlay) {
-        showMyPinLocations.setValue(showOverlay);
+    public void setShowMyLocationsOverlay(boolean showOverlay) {
+        showMyLocationsOverlay.setValue(showOverlay);
     }
 
     /**
@@ -180,7 +181,7 @@ public class OSMMapViewVM extends AndroidViewModel {
      */
     @NonNull
     public LiveData<Boolean> isMyLocationsOverlayShown() {
-        return showMyPinLocations;
+        return showMyLocationsOverlay;
     }
 
     /**
@@ -283,17 +284,10 @@ public class OSMMapViewVM extends AndroidViewModel {
     }
 
     /**
-     * @param relatedObject to be set as currently selected related Object
-     */
-    public void setSelectedPinLocationIWObject(final MyLocation relatedObject) {
-        selectedPinLocationIWObject.setValue(Optional.ofNullable(relatedObject));
-    }
-
-    /**
      * @return LiveData of list with loaded 'my locations
      */
-    public LiveData<List<MyLocation>> myPinLocationsLiveData() {
-        return myPinLocationsLiveData;
+    public LiveData<List<MyLocation>> getMyLocationsData() {
+        return mMyLocationsData;
     }
 
     /**
@@ -319,5 +313,14 @@ public class OSMMapViewVM extends AndroidViewModel {
      */
     public Optional<GeoPoint> getTargetMarkerGeoPoint() {
         return Optional.ofNullable(targetMarkerGeopoint);
+    }
+
+    /**
+     * Requests delete of passed location from database.
+     * @param location to be deleted from database.
+     * @return Completable of deletion task.
+     */
+    public Completable removeLocation(final MyLocation location) {
+        return myLocationDao.delete(location);
     }
 }

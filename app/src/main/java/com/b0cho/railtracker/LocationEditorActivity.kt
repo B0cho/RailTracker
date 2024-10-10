@@ -96,6 +96,7 @@ class LocationEditorActivity : AppCompatActivity() {
                                 this?.showCurrentPosition ?: false,
                                 this?.selectedTileSourceKey ?: 0,
                                 this?.selectedOverlaysKeys ?: listOf(0),
+                                this?.showMyLocationsOverlay ?: false,
                                 mLocationPosition,
                                 mLocationName
                             )

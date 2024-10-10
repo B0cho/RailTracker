@@ -1,9 +1,8 @@
 package com.b0cho.railtracker
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
+import androidx.lifecycle.LiveData
+import androidx.room.*
+import io.reactivex.rxjava3.core.Completable
 
 @Dao
 interface MyLocationDao {
@@ -11,7 +10,8 @@ interface MyLocationDao {
     suspend fun insert(pinLocation: MyLocation): Long
 
     @Query("SELECT * FROM my_locations")
-    fun getAll(): List<MyLocation>
+    fun getAll(): LiveData<List<MyLocation>>
 
-
+    @Delete
+    fun delete(location: MyLocation): Completable
 }

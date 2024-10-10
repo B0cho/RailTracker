@@ -24,6 +24,11 @@ import dagger.multibindings.StringKey;
 @Module
 @InstallIn(ViewModelComponent.class)
 public class OSM_OverlaysModule {
+    /**
+     * Overlays like OSM Markers, Overlays etc. are not provided here or other @Modules because of
+     * their dependency on MapView object, that must be passed in constructor. Therefore they
+     * are created in activities/fragments.
+     */
     @Provides
     @IntoMap
     @StringKey("OpenRailwayMap")

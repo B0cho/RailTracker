@@ -89,9 +89,10 @@ open class LocationPickerDTO(
     mapShowingCurrPosition: Boolean,
     mapTileSourceKey: Int,
     mapSelectedOverlays: List<Int>,
+    isMyLocationsOverlayShown: Boolean,
     val currentGeopoint: GeoPoint? = null,
     val locationName: String? = null,
-) : OSMMapViewActivity.MapViewDTO(center, mapZoom, mapShowingCurrPosition, mapTileSourceKey, ArrayList(mapSelectedOverlays)) {
+) : OSMMapViewActivity.MapViewDTO(center, mapZoom, mapShowingCurrPosition, mapTileSourceKey, ArrayList(mapSelectedOverlays), isMyLocationsOverlayShown) {
     constructor(mapViewDTO: OSMMapViewActivity.MapViewDTO,
                 currentGeopoint: GeoPoint? = null,
                 locationName: String? = null,
@@ -101,6 +102,7 @@ open class LocationPickerDTO(
         mapViewDTO.showCurrentPosition,
         mapViewDTO.selectedTileSourceKey,
         mapViewDTO.selectedOverlaysKeys,
+        mapViewDTO.showMyLocationsOverlay,
         currentGeopoint,
         locationName,
     )
@@ -111,6 +113,7 @@ open class LocationPickerDTO(
         `in`.readByte() == 1.toByte(),
         `in`.readInt(),
         `in`.readArrayList(ArrayList::class.java.classLoader, Integer::class.java)!!.stream().map { it.toInt() }.toList(),
+        `in`.readByte() == 1.toByte(),
         `in`.readParcelable(GeoPoint::class.java.classLoader, GeoPoint::class.java), // currentGeopoint
         `in`.readString(), // locationName
     )
