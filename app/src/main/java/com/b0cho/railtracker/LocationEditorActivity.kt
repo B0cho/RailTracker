@@ -1,13 +1,18 @@
 package com.b0cho.railtracker
 
 import android.database.sqlite.SQLiteException
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -16,9 +21,14 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.b0cho.railtracker.App.logTAG
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.osmdroid.util.GeoPoint
 import javax.inject.Inject
 
@@ -31,6 +41,7 @@ class LocationEditorActivity : AppCompatActivity() {
 
     private val mLocationEditorVM: LocationEditorVM by viewModels()
     private lateinit var mLocationPickerLauncher: ActivityResultLauncher<LocationPickerDTO?>
+    private lateinit var mPicturesPickerLauncher: ActivityResultLauncher<PickVisualMediaRequest>
     private lateinit var mLocationName: String
     private var mLocationPosition: GeoPoint? = null
     private var mPendingSaveDialog: AlertDialog? = null
@@ -68,7 +79,7 @@ class LocationEditorActivity : AppCompatActivity() {
         }.also { onBackPressedDispatcher.addCallback(this, it) }
 
         with(mLocationEditorVM) {
-            with(findViewById<EditText>(R.id.nameEditText)) {
+            findViewById<EditText>(R.id.nameEditText).apply {
                 locationName.observe(this@LocationEditorActivity) {
                     if (it != this.text.toString()) {
                         this.setText(it)
@@ -77,11 +88,11 @@ class LocationEditorActivity : AppCompatActivity() {
                 doAfterTextChanged { setLocationName(text.toString()) }
             }
 
-            with(findViewById<EditText>(R.id.notesEditText)) {
+            findViewById<EditText>(R.id.notesEditText).apply {
                 doAfterTextChanged { setLocationNotes(text.toString()) }
             }
 
-            with(findViewById<TextView>(R.id.coordinatesTextView)) {
+            findViewById<TextView>(R.id.coordinatesTextView).apply {
                 locationPosition.observe(this@LocationEditorActivity) {
                     this.text = it.toString()
                 }
@@ -105,7 +116,7 @@ class LocationEditorActivity : AppCompatActivity() {
                 }
             }
 
-            with(findViewById<Button>(R.id.saveButton)) {
+            findViewById<Button>(R.id.saveButton).apply {
                 isLocationSaveable.observe(this@LocationEditorActivity) { isEnabled = it }
                 setOnClickListener {
                     viewModelScope.launch {
@@ -117,9 +128,7 @@ class LocationEditorActivity : AppCompatActivity() {
                             } catch (e: Exception) {
                                 when(e) {
                                     is SQLiteException,
-                                    is IllegalStateException -> {
-                                        Toast.makeText(applicationContext, "Save failed!", Toast.LENGTH_SHORT).show()
-                                    }
+                                    is IllegalStateException -> Toast.makeText(applicationContext, "Save failed!", Toast.LENGTH_SHORT).show()
                                     else -> throw e
                                 }
                             }
@@ -133,8 +142,22 @@ class LocationEditorActivity : AppCompatActivity() {
                 }
             }
 
+            findViewById<Button>(R.id.pickPicturesButton).setOnClickListener {
+                mPicturesPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
+
             locationName.observe(this@LocationEditorActivity) { mLocationName = it }
             locationPosition.observe(this@LocationEditorActivity) { mLocationPosition = it }
+            locationPictures.observe(this@LocationEditorActivity) {
+                // TODO: dynamically remove and add pictures to activity
+
+            }
+            mainPicture.observe(this@LocationEditorActivity) {
+                findViewById<ImageView>(R.id.mainPictureImageView).apply {
+                    setImageURI(null)
+                    setImageURI(it)
+                }
+            }
             isLocationSaved.observe(this@LocationEditorActivity) { exitDialogCallback.isEnabled = !it }
             pendingSavingJob.observe(this@LocationEditorActivity) {
                 it?.let {
@@ -165,6 +188,14 @@ class LocationEditorActivity : AppCompatActivity() {
                     }
                 }
             }
+
+        mPicturesPickerLauncher = registerForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(5)) {
+            Log.d(logTAG, "Retrieved URIs from PicturePicker:")
+            if(it.isNotEmpty()) {
+                Log.d(logTAG, it.toString())
+            }
+            mLocationEditorVM.addLocationPictures(it)
+        }
     }
 
     override fun onStart() {
@@ -219,6 +250,27 @@ private class LocationEditorVM @Inject constructor(
         validateLocationData()
     }
 
+    private val mPictures: MutableLiveData<MutableList<Uri>> = MutableLiveData(mutableListOf())
+    val locationPictures: LiveData<MutableList<Uri>>
+        get() = mPictures
+    fun addLocationPictures(uris: List<@JvmSuppressWildcards Uri>) {
+        mPictures.value = mPictures.value?.apply {
+            addAll(uris)
+            distinct()
+        }
+
+        if(mMainPicture.value == null) {
+            setMainPicture(uris.first())
+        }
+    }
+
+    private val mMainPicture: MutableLiveData<Uri?> = MutableLiveData(null)
+    val mainPicture: LiveData<Uri?>
+        get() = mMainPicture
+    fun setMainPicture(uri: Uri?) {
+        mMainPicture.value = uri
+    }
+
     private val mIsSaveable: MutableLiveData<Boolean> = MutableLiveData(false)
     val isLocationSaveable: LiveData<Boolean>
         get() = mIsSaveable
@@ -241,6 +293,8 @@ private class LocationEditorVM @Inject constructor(
                     name = mName.value!!,
                     position = mPosition.value!!,
                     notes = mNotes.value,
+                    pictureUris = mPictures.value!!,
+                    mainPictureUri = mMainPicture.value,
                 )
             ).also {
                 if(it == 0L) {

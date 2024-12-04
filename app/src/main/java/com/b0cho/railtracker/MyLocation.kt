@@ -1,5 +1,6 @@
 package com.b0cho.railtracker
 
+import android.net.Uri
 import android.os.Parcelable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -15,6 +16,8 @@ data class MyLocation(
     val position: GeoPoint,
     val notes: String?,
     val timeCreated: Timestamp = Timestamp(System.currentTimeMillis()),
+    val pictureUris: List<Uri>,
+    val mainPictureUri: Uri?,
 
-    // TODO: add columns naming 'column_name', add column for uri of marker photo
+    // TODO: add columns naming 'column_name'
 ) : Parcelable

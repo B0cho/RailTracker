@@ -37,28 +37,43 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="@id/locationEditorToolbar"
-        app:layout_constraintTop_toBottomOf="@+id/locationEditorToolbar">
+        app:layout_constraintTop_toBottomOf="@+id/locationEditorToolbar"
+        app:layout_constraintVertical_bias="0.0">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/mainPictureImageView"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="16dp"
+                android:adjustViewBounds="true"
+                android:maxHeight="240dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:srcCompat="@tools:sample/avatars" />
 
             <EditText
                 android:id="@+id/nameEditText"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
-                android:layout_marginTop="16dp"
                 android:layout_marginEnd="16dp"
                 android:ems="10"
                 android:hint="@string/location_editor_name_hint"
-                android:textSize="25sp"
-                android:inputType="textPersonName"
                 android:importantForAutofill="no"
+                android:inputType="textPersonName"
+                android:textSize="25sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toBottomOf="@+id/mainPictureImageView" />
 
             <EditText
                 android:id="@+id/notesEditText"
@@ -68,8 +83,8 @@
                 android:ems="10"
                 android:gravity="start|top"
                 android:hint="@string/location_editor_notes_hint"
-                android:inputType="textMultiLine"
                 android:importantForAutofill="no"
+                android:inputType="textMultiLine"
                 app:layout_constraintEnd_toEndOf="@+id/nameEditText"
                 app:layout_constraintStart_toStartOf="@+id/nameEditText"
                 app:layout_constraintTop_toBottomOf="@+id/nameEditText" />
@@ -82,6 +97,15 @@
                 android:text="Coordinates:"
                 app:layout_constraintStart_toStartOf="@+id/notesEditText"
                 app:layout_constraintTop_toBottomOf="@+id/notesEditText" />
+
+            <Button
+                android:id="@+id/pickPicturesButton"
+                android:layout_width="88dp"
+                android:layout_height="88dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/ic_image"
+                app:layout_constraintStart_toStartOf="@+id/notesEditText"
+                app:layout_constraintTop_toBottomOf="@+id/coordinatesTextView" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

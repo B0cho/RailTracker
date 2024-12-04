@@ -1,11 +1,11 @@
 package com.b0cho.railtracker.di
 
 import android.content.Context
+import android.net.Uri
 import androidx.room.Room
-import com.b0cho.railtracker.AppDatabase
-import com.b0cho.railtracker.ILocationProvider
-import com.b0cho.railtracker.RailLocationProvider
+import com.b0cho.railtracker.*
 import com.google.android.gms.location.LocationServices
+import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,9 +20,14 @@ import javax.inject.Singleton
 class ApplicationModule {
     @Provides
     @Singleton
-    fun provideApplicationDatabase(@ApplicationContext appContext: Context): AppDatabase {
-        return Room.databaseBuilder(appContext, AppDatabase::class.java, "AppDatabase").build()
+    fun provideApplicationDatabase(@ApplicationContext appContext: Context, dbGsonBuilder: GsonBuilder): AppDatabase {
+        return Room.databaseBuilder(appContext, AppDatabase::class.java, "AppDatabase")
+            .addTypeConverter(DatabaseConverters(dbGsonBuilder))
+            .build()
     }
+
+    @Provides
+    fun provideDbGsonBuilder(): GsonBuilder = GsonBuilder().registerTypeAdapter(Uri::class.java, UriAdapter())
 
     @Provides
     @Singleton
