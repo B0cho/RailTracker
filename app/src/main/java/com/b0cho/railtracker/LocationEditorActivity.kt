@@ -1,5 +1,6 @@
 package com.b0cho.railtracker
 
+import URI_ImageViewAdapter
 import android.database.sqlite.SQLiteException
 import android.net.Uri
 import android.os.Bundle
@@ -21,7 +22,10 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.b0cho.railtracker.App.logTAG
+import com.bumptech.glide.Glide
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -45,6 +49,7 @@ class LocationEditorActivity : AppCompatActivity() {
     private lateinit var mLocationName: String
     private var mLocationPosition: GeoPoint? = null
     private var mPendingSaveDialog: AlertDialog? = null
+    private var picturesGridViewAdapter = URI_ImageViewAdapter(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +66,10 @@ class LocationEditorActivity : AppCompatActivity() {
                 )
             }
         }
+
+        val picturesRecyclerView = findViewById<RecyclerView>(R.id.picturesRecyclerView)
+        picturesRecyclerView.layoutManager = StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
+        picturesRecyclerView.adapter = picturesGridViewAdapter
 
         val exitDialogCallback = object : OnBackPressedCallback(false) {
             override fun handleOnBackPressed() {
@@ -149,13 +158,16 @@ class LocationEditorActivity : AppCompatActivity() {
             locationName.observe(this@LocationEditorActivity) { mLocationName = it }
             locationPosition.observe(this@LocationEditorActivity) { mLocationPosition = it }
             locationPictures.observe(this@LocationEditorActivity) {
-                // TODO: dynamically remove and add pictures to activity
+                val newItems = it.minus(picturesGridViewAdapter.imageURIs)
+                if(newItems.isNotEmpty()) {
+                    picturesGridViewAdapter.add(newItems)
+                }
 
             }
             mainPicture.observe(this@LocationEditorActivity) {
+                // TODO: horizontal grid view?
                 findViewById<ImageView>(R.id.mainPictureImageView).apply {
-                    setImageURI(null)
-                    setImageURI(it)
+                    Glide.with(this@LocationEditorActivity).load(it).into(this)
                 }
             }
             isLocationSaved.observe(this@LocationEditorActivity) { exitDialogCallback.isEnabled = !it }

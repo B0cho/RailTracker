@@ -33,7 +33,7 @@
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -103,9 +103,23 @@
                 android:layout_width="88dp"
                 android:layout_height="88dp"
                 android:layout_marginTop="8dp"
-                android:background="@drawable/ic_image"
+                android:background="@drawable/ic_button_add_pic"
                 app:layout_constraintStart_toStartOf="@+id/notesEditText"
                 app:layout_constraintTop_toBottomOf="@+id/coordinatesTextView" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/picturesRecyclerView"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="64dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="@+id/nameEditText"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="@+id/nameEditText"
+                app:layout_constraintTop_toBottomOf="@+id/pickPicturesButton">
+
+            </androidx.recyclerview.widget.RecyclerView>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
