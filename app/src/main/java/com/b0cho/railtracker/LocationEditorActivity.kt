@@ -1,6 +1,5 @@
 package com.b0cho.railtracker
 
-import URI_ImageViewAdapter
 import android.database.sqlite.SQLiteException
 import android.net.Uri
 import android.os.Bundle

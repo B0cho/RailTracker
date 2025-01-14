@@ -1,19 +1,19 @@
+package com.b0cho.railtracker
+
 import android.content.Context
-import android.media.Image
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
-import com.b0cho.railtracker.R
 import com.bumptech.glide.Glide
 
 class URI_ImageViewAdapter(private val context: Context,
                            val imageURIs: MutableList<Uri> = mutableListOf()
 ) : RecyclerView.Adapter<URI_ImageViewAdapter.ViewHolder>() {
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val pictureImageView = itemView.findViewById<ImageView>(R.id.thumbnailImageView)
+        val pictureImageView = itemView.findViewById<ImageView>(R.id.thumbnailImageView)!!
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {

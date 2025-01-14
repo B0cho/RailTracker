@@ -11,3 +11,6 @@
 /build
 /captures
 .externalNativeBuild
+/app/schemas/com.b0cho.railtracker.AppDatabase
+/.idea/kotlinc.xml
+/.idea/migrations.xml
